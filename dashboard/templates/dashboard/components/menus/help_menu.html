@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<!--
+  Help Menu
+  Created: 5/4/2021
+  Updated: 11/22/2022
+-->
+{% load icon %}
+<div class="btn-group dropdown">
+  <button
+    type="button"
+    class="btn btn-sm dropdown-toggle simple-dropdown px-2"
+    data-bs-toggle="dropdown"
+    aria-expanded="false"
+  >
+    {% icon
+      'help-circle'
+      width="24px"
+      height="24px"
+      class="text-secondary"
+      data-bs-toggle="tooltip"
+      data-bs-placement="bottom"
+      title="Get Help"
+    %}
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end shadow">
+    <li>
+      <a class="dropdown-item text-dark" href="https://cannabisdata.com" target="_blank">
+        Get support
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item text-dark" href="https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE" target="_blank">
+        License
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item text-dark" href="https://github.com/cannabisdata/cannabisdata" target="_blank">
+        Source Code
+      </a>
+    </li>
+    <li><hr class="dropdown-divider"></li>
+    <li class="px-3"><small>Version {{ version }}</small></li>
+  </ul>
+</div>
+</html>

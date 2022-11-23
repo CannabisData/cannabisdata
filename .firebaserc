@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "cannlytics-cannabis-data"
+  },
+  "targets": {
+    "cannlytics-cannabis-data": {
+      "hosting": {
+        "dev": [
+          "cannlytics-cannabis-data-dev"
+        ],
+        "production": [
+          "cannlytics-cannabis-data"
+        ]
+      }
+    }
+  }
+}

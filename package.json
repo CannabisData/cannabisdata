@@ -1,0 +1,72 @@
+{
+  "name": "cannabisdata",
+  "version": "0.0.1",
+  "license": "MIT",
+  "homepage": "https://cannabisdata.com",
+  "description": "",
+  "keywords": [
+    "cannabis",
+    "data"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cannabisdata/cannabisdata.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cannabisdata/cannabisdata/issues",
+    "email": "hello@cannabisdata.com"
+  },
+  "private": true,
+  "scripts": {
+    "dashboard:start": "npm-run-all --parallel dashboard:livereload dashboard:dev dashboard:serve",
+    "dashboard:serve": "cd dashboard & webpack serve --env development & cd ../",
+    "dashboard:livereload": "set PROJECT=dashboard & python manage.py livereload --ignore-static-dirs",
+    "dashboard:dev": "set PROJECT=dashboard & python manage.py runserver",
+    "dashboard:build": "cd dashboard & webpack --env production & cd ../",
+    "dashboard:collectstatic": "set PROJECT=dashboard & python manage.py collectstatic --noinput",
+    "dashboard:container": "npm run dashboard:collectstatic & gcloud builds submit --tag gcr.io/cannlytics-cannabis-data/cannlytics_cannabis_data",
+    "dashboard:cloud": "gcloud run deploy cannlytics-cannabis-data --image gcr.io/cannlytics-cannabis-data/cannlytics_cannabis_data --set-env-vars SETTINGS_NAME=cannabisdata_settings --region us-central1 --allow-unauthenticated --platform managed --memory 2Gi --cpu 2 --min-instances 0",
+    "dashboard:deploy": "firebase deploy --project cannlytics-cannabis-data --only hosting:production",
+    "dashboard:publish": "npm run dashboard:build & npm run dashboard:container & npm run dashboard:cloud & npm run dashboard:deploy"
+  },
+  "dependencies": {
+    "@popperjs/core": "2.11.6",
+    "@primer/octicons": "17.9.0",
+    "axios": "1.2.0",
+    "bootstrap": "5.2.3",
+    "firebase": "9.14.0",
+    "html5-qrcode": "2.2.1",
+    "particles.js": "2.0.0",
+    "popper.js": "1.16.1",
+    "tether": "2.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/plugin-proposal-class-properties": "^7.16.0",
+    "@babel/plugin-transform-runtime": "^7.16.4",
+    "@babel/preset-env": "^7.16.4",
+    "@types/autoprefixer": "^10.2.0",
+    "autoprefixer": "^9.8.8",
+    "babel-loader": "^8.1.0",
+    "css-loader": "^5.2.7",
+    "css-minimizer-webpack-plugin": "^3.4.1",
+    "dotenv-webpack": "^6.0.0",
+    "extract-loader": "^5.1.0",
+    "file-loader": "^6.1.0",
+    "npm-run-all": "^4.1.5",
+    "postcss": "^8.4.1",
+    "postcss-loader": "^5.3.0",
+    "sass": "^1.56.1",
+    "sass-loader": "^10.4.1",
+    "style-loader": "^1.3.0",
+    "webpack": "^5.36.2",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.6.0",
+    "webpack-node-externals": "^3.0.0"
+  },
+  "babel": {
+    "plugins": [
+      "@babel/plugin-proposal-class-properties"
+    ]
+  }
+}

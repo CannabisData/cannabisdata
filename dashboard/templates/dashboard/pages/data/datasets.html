@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<!--
+  Datasets Page
+  Created 12/14/2021
+  Updated: 12/14/2021
+  TODO:
+   - Implement functionality to allow users to manage their datasets
+   and create new datasets. It would be awesome to show a grid of
+   states
+-->
+{% extends "dashboard/main.html" %}
+{% load icon %}
+{% block title %}{% if section == 'new' %}New | {% elif section %}{{ section }} | {% endif %}Datasets | Cannlytics {% endblock title %}
+{% block dashboard_css %}
+
+  <!-- AG-Grid CSS and JavaScript -->
+  {% include "dashboard/components/tables/ag_grid_scripts.html" %}
+
+{% endblock dashboard_css %}
+{% block dashboard_body %}
+{% if section and section not in 'logs,files,certifiates' %}
+
+  <!-- Detail page -->
+  {% include "dashboard/pages/analytes/analyte.html" with
+    id=section
+    data_model=data_model
+  %}
+
+{% else %}
+
+  <!-- List -->
+  <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4 pb-5 mx-auto">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-4 pb-2 mb-3 mt-2 border-bottom">
+      <h4 class="breadcrumb-item text-dark lh-sm fs-6 mb-0">Datasets</h4>
+    </div>
+
+    <!-- Body -->
+    <div class="datasets">
+
+      <!-- Tabs -->
+      {% include "dashboard/components/forms/form_tabs.html" with
+        model="datasets"
+      %}
+
+      <!-- Logs -->
+      {% if section == 'logs' %}
+        {% include "dashboard/pages/settings/logs/logs.html" with
+          model='datasets'
+          model_singular='dataset'
+          organizations=organizations
+          section=section
+          user=user
+        %}
+
+      <!-- Files -->
+      {% elif section == 'files' %}
+        {% include "dashboard/pages/settings/files/files.html" with
+          model='datasets'
+          model_singular='dataset'
+          organizations=organizations
+          section=section
+          user=user
+        %}
+
+      <!-- Table -->
+      {% else %}
+
+        <!-- Options -->
+        {% include "dashboard/components/tables/simple_table_options.html" with
+          model='datasets'
+          model_singular='dataset'
+          limit=1000
+        %}
+
+        <!-- Loading placeholder -->
+        <div id="loading-placeholder">
+          {% include "dashboard/components/placeholders/loading_placeholder.html" with
+            height='350px'
+            width='100%'
+            only
+          %}
+        </div>
+
+        <!-- No-data Placeholder -->
+        <div id="data-placeholder" class="d-none">
+          {% include "dashboard/components/placeholders/placeholder.html" with
+            placeholder=datasets.placeholder
+            only
+          %}
+        </div>
+
+        <!-- AG Grid Table -->
+        <div id="data-table" class="d-none">
+          <div
+            id="datasets-table"
+            class="ag-theme-alpine-dark"
+            style="height: 350px; width:100%;"
+          ></div>
+        </div>
+
+      {% endif %}
+
+    </div><!-- End of the body -->
+
+  </main>
+{% endif %}
+{% endblock dashboard_body %}
+
+<!-- JavaScript -->
+{% block dashboard_js %}
+
+  {% if not section %}
+    <script>
+      cannabisdata.app.awaitStreamData('datasets', 'dataset', '{{ organizations.0.organization_id }}', 1000);
+    </script>
+  {% endif %}
+
+{% endblock dashboard_js %}
+</html>

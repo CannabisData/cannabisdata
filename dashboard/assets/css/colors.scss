@@ -1,0 +1,211 @@
+/**
+ * Cannabis Data Style | Colors
+ * Copyright (c) 2022 Cannabis Data
+ * Copyright (c) 2021-2022 Cannlytics
+ * 
+ * Authors:
+ *     Keegan Skeate <https://github.com/keeganskeate>
+ * Created: 10/4/2020
+ * Updated: 11/22/2022
+ * License: MIT License <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
+ */
+
+.light-text {
+  color: #E5E4E2;
+  text-decoration: none;
+}
+.underline-hover:hover,
+.light-text.underline:hover {
+  text-decoration: underline;
+  text-decoration-color: #ffa600;
+}
+.text-dark {
+  color: #1a1a1a !important;
+}
+.simple-icon {
+  fill: #1a1a1a;
+}
+body.dark .simple-icon {
+  fill: #ccc;
+}
+.text-secondary-on-light {
+  color: #ccc !important;
+}
+a.text-secondary-on-light:hover {
+  color: #ccc;
+}
+a.text-secondary:hover {
+  color: #000 !important;
+}
+svg.text-secondary:hover {
+  stroke: #000 !important;
+}
+body.dark h2.text-secondary,
+body.dark p.text-secondary,
+body.dark small,
+body.dark svg.text-secondary,
+body.dark .toast-body.text-secondary {
+  color: #ccc !important;
+}
+body.dark a.text-secondary small:hover {
+  color: #fff !important;
+}
+body.dark svg.text-secondary:hover {
+  stroke: #fff !important;
+}
+
+::-moz-selection {
+  color: #1a1a1a;
+  background: #96e6a1;
+}
+::selection {
+  color: #1a1a1a;
+  background: #96e6a1;
+}
+
+/* General colors */
+.cannlytics-light-orange {
+  background: #ffa600;
+}
+.cannlytics-light-orange-text {
+  color: #ffa600;
+}
+a.cannlytics-light-orange-text:hover {
+  color: #e53a23ff !important;
+}
+.cannlytics-dark-orange {
+  background: #e53a23ff;
+}
+.cannlytics-dark-orange-text {
+  color: #e53a23ff;
+}
+body.dark .cannlytics-dark-orange-text {
+  color: #ffa600;
+}
+a.cannlytics-dark-orange-text:hover {
+  color: #ffa600;
+}
+body.dark a.cannlytics-dark-orange-text:hover {
+  color: #FF9500;
+}
+.cannlytics-green {
+  background: #45B649;
+}
+.cannlytics-green-text {
+  color: #0BA67F;
+}
+.cannlytics-green-text svg {
+  fill: #45B649;
+}
+.cannlytics-green-text:hover {
+  color: #3f7f34ff;
+}
+.cannlytics-green-text:hover svg {
+  fill: #3f7f34ff;
+}
+.cannlytics-dark-green {
+  background: #3f7f34ff;
+}
+.cannlytics-dark-green-text {
+  color: #3f7f34ff;
+}
+.cannlytics-dark-green-text:hover {
+  color: #45B649;
+}
+.cannlytics-darkest-green {
+  background: #104607ff;
+}
+.cannlytics-darkest-green-text {
+  color: #104607ff;
+}
+.cannlytics-light-green {
+  background: #96e6a1;
+}
+.cannlytics-light-green-text {
+  color: #96e6a1;
+}
+a.cannlytics-light-green-text:hover {
+  text-decoration: underline;
+}
+.light-green-hover:hover,
+.cannlytics-light-green-text:hover {
+  color: #96e6a1 !important;
+  fill: #96e6a1 !important;
+}
+.cannlytics-purple {
+  color: #281e52;
+  fill: #281e52;
+}
+.bg-cannlytics-green {
+  background-color: #104607;
+}
+body.dark .bg-cannlytics-green {
+  background-color: #263238;
+}
+
+/* Text gradients */
+.text-gradient {
+  background: -webkit-linear-gradient(-45deg,#45B649, #1f622f);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+body.dark .text-gradient {
+  background: -webkit-linear-gradient(-45deg,#45B649, #96e6a1);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+body.dark .text-gradient-reverse {
+  background: -webkit-linear-gradient(-45deg, #96e6a1, #45B649);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Background gradients */
+.bg-gradient-green {
+  transition: opacity 0.3s;
+  background: -webkit-linear-gradient(-45deg,#3f7f34ff, #45B649);
+}
+a.bg-gradient-green:hover,
+button.bg-gradient-green:hover {
+  background: #3f7f34ff;
+  background: -webkit-linear-gradient(-45deg,#3f7f34ff, #5C9D52);
+}
+.bg-gradient-orange {
+  transition: opacity 0.3s;
+  background: -webkit-linear-gradient(-45deg,#e53a23ff, #ffa600);
+}
+a.bg-gradient-orange:hover,
+button.bg-gradient-orange:hover {
+  background: -webkit-linear-gradient(-45deg,#B9220E, #FF9500);
+}
+.bg-gradient-purple {
+  transition: opacity 0.3s;
+  background: -webkit-linear-gradient(-45deg,#007bff, #554b80);
+}
+a.bg-gradient-purple:hover,
+button.bg-gradient-purple:hover {
+  background: -webkit-linear-gradient(-45deg,#007bff, #3D3367);
+}
+.light-green-fade {
+  background: linear-gradient(to left top,#d4fc7933 50%,#fff 50%)
+}
+body.dark .light-green-fade {
+  background: transparent;
+}
+.night-fade {
+  background: #281e52;
+  background: -webkit-linear-gradient(to top left, #281e52, #ffd45233);
+  background: linear-gradient(to top left, #281e52, #ffd45233);
+}
+.grass-background {
+  background: #fff;  /* fallback for old browsers */
+  background: -webkit-linear-gradient(to top left, #45B64980, #DCE35B80);  /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to top left, #45B64980, #DCE35B80); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background-repeat: no-repeat;
+}
+.gradient.grass {
+  background-image: linear-gradient(120deg, #d4fc79 0%, #96e6a1 100%);
+}

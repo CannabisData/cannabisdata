@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Project secrets.
+.admin/**
+**/node_modules/**
+**hot-update.**
+public/dashboard/**

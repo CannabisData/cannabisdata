@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en-US">
+<!--
+  Base Template
+  Copyright (c) 2021-2022 Cannlytics
+
+  Authors: Keegan Skeate <https://github.com/keeganskeate>
+  Created: 1/7/2021
+  Updated: 11/22/2022
+  License: MIT License <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
+-->
+ {% load static %}
+ <head>
+  <!-- Metadata -->
+  <meta charset="utf-8"/>
+  <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+  <meta name="theme-color" content="#6D4488"/>
+  <meta name="description" content="Cannabis Data is an incubator for projects which serve the fresh flowering of humanity's relationships with the plant Cannabis and its many cultivars (medical, CBD, adult-use, and hemp)."/>
+  <meta name="author" content="Cannabis Data <help@cannabisdata.com>"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  
+  <!-- Logos -->
+  <link rel="icon" href="{% static 'images/logos/favicon.ico' %}">
+  <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/logos/favicon.ico' %}"/>
+  <link rel="icon" sizes="32x32" type="image/png" href="{% static 'images/logos/cannabis-data-logo-32.png' %}"/>
+  <link rel="icon" sizes="16x16" type="image/png" href="{% static 'images/logos/cannabis-data-logo-16.png' %}"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/logos/cannabis-data-logo-180.png' %}"/>
+  <link rel="mask-icon" color="#e48632" href="{% static 'images/logos/cannabis-data-logo.svg' %}"/>
+
+  <!-- Title -->
+  <title>{% block title %}Cannabis Data{% endblock title %}</title>
+  
+  <!-- jQuery -->
+  <script crossorigin="anonymous" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+
+  <!-- JavaScript Module -->
+  <script id="cannabis-data" src="{% static 'dashboard/bundles/cannabisdata.min.js'%}?{% if DEBUG %}{% now 'U' %}{% else %}{{ APP_VERSION_NUMBER }}{% endif %}"></script>
+
+  <!-- Main Stylesheets -->
+  {% block main_css %}{% endblock main_css %}
+
+ </head>
+ 
+<!-- Body with dynamic page content -->
+<body class="base">
+  <div id="page">
+    {% block page %}{% endblock page %}
+  </div>
+</body>
+
+<!-- Main JavaScript -->
+{% block main_js %}{% endblock main_js %}
+
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<!--
+  Dashboard
+  Created: 11/26/2020 | Thanksgiving
+  Updated: 11/23/2022
+-->
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+<!-- Title -->
+{% block title %}
+  {% if unit %}
+    {{ unit|title }}
+  {% elif section %}
+    {{ section|title }}
+  {% elif screen %}
+    {{ screen|title }}
+  {% else %}Dashboard{% endif %} | Cannabis Data
+{% endblock %}
+
+<!-- Headers -->
+{% block main_css %}
+
+  <!-- Page-specific CSS -->
+  {% block dashboard_css %}{% endblock dashboard_css %}
+
+{% endblock main_css %}
+
+<!-- Page -->
+{% block page %}
+
+  <!-- Set the theme after the body, but before the page, loads. -->
+  <script>
+    cannabisdata.theme.setInitialTheme();
+  </script>
+
+  <!-- Top Navigation -->
+  {% include "dashboard/layout/topbar.html" with
+    navbar=navbar
+    version=APP_VERSION_NUMBER
+    user=user
+    organizations=organizations
+    only
+  %}
+
+  <!-- Main Dashboard Area -->
+  <div id="dashboard" class="container-fluid">
+    <div class="row">
+      
+      <!-- Side Navigation -->
+      {% include "dashboard/layout/sidebar.html" with
+        screen=screen
+        data_models=data_models
+        user=user
+        organizations=organizations
+        only
+      %}
+
+      <!-- Dynamic Body -->
+      {% block dashboard_body %}{% endblock dashboard_body %}
+      
+    </div>
+  </div>
+
+  <!-- Footer -->
+  {% include "dashboard/layout/footer.html" with
+    policies=app.policies
+    version=APP_VERSION_NUMBER
+    only
+  %}
+
+  <!-- Notifications -->
+  {% include "dashboard/components/notifications/notification_toast.html" %}
+
+{% endblock page %}
+
+<!-- Main JavaScript -->
+{% block main_js %}
+
+  <!-- Initialize the console -->
+  <script>
+    cannabisdata.app.initialize();
+  </script>
+
+  <!-- Page-specific JavaScript -->
+  {% block dashboard_js %}{% endblock dashboard_js %}
+
+{% endblock main_js %}
+</html>
