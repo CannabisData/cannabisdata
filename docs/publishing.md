@@ -3,7 +3,7 @@
 First, you will need to save your environment variables as a secret. Then, you may want to walk through the build process one time manually. Afterwards, publishing the website is done with one command:
 
 ```shell
-npm run website:publish
+npm run dashboard:publish
 ```
 
 ## Create your secret environment variables
@@ -178,7 +178,7 @@ firebase deploy --project %PROJECT_ID% --only hosting:production
 or
 
 ```shell
-npm run deploy
+npm run dashboard:deploy
 ```
 
 ### Security rules

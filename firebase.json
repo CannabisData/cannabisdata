@@ -38,6 +38,38 @@
           }
         }
       ]
+    },
+    {
+      "target": "dev",
+      "public": "public/dashboard",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "!/sitemap",
+          "run": {
+            "serviceId": "cannlytics-cannabis-data-dev",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "!/static",
+          "run": {
+            "serviceId": "cannlytics-cannabis-data-dev",
+            "region": "us-central1"
+          }
+        },
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "cannlytics-cannabis-data-dev",
+            "region": "us-central1"
+          }
+        }
+      ]
     }
   ]
 }

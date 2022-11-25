@@ -196,7 +196,7 @@ python manage.py runserver
 You can leverage [django-livereload-server](https://github.com/tjwalch/django-livereload-server) for hot-reloading while you develop, simply with:
 
 ```bash
-npm run start
+npm run dashboard:start
 ```
 
 > If you encounter problems with livereload, then try `pip uninstall django-livereload-server livereload` followed by `pip install django-livereload-server`.
@@ -238,7 +238,7 @@ webpack-dev-server --env production=False
 It is an inconvenience to run multiple consoles, but a major convenience to have smooth hot-reloading. So, [`npm-run-all`](https://www.npmjs.com/package/npm-run-all) is used to run multiple servers in the same console for smooth development. When you are setup, you can run the project for development simply with:
 
 ```bash
-npm run start
+npm run dashboard:start
 ```
 
 ### Data <a name="data"></a>
@@ -336,7 +336,7 @@ docker push gcr.io/cannabisdata/cannabisdata
 See [the publishing guide](https://docs.cannlytics.com/developers/publishing/) for complete instructions on how to publish Cannlytics for production. The guide is based on the [Running Django on Cloud Run guide](https://cloud.google.com/python/django/run#windows). After setup, publishing is done with one command:
 
 ```bash
-npm run publish
+npm run dashboard:publish
 ```
 
 If you need to change accounts or projects, then you can use:

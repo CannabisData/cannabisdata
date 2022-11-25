@@ -32,8 +32,6 @@ You're then off to the races.
 
 ## 📜 License
 
-Copyright © 2018-2022 Cannabis Data
-
 ```
 Copyright (c) 2018-2022 Cannabis Data
 
