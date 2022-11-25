@@ -25,7 +25,7 @@
     "dashboard:build": "cd dashboard & webpack --env production & cd ../",
     "dashboard:collectstatic": "set PROJECT=dashboard & python manage.py collectstatic --noinput",
     "dashboard:container": "npm run dashboard:collectstatic & gcloud builds submit --tag gcr.io/cannlytics-cannabis-data/cannlytics_cannabis_data",
-    "dashboard:cloud": "gcloud run deploy cannlytics-cannabis-data --image gcr.io/cannlytics-cannabis-data/cannlytics_cannabis_data --set-env-vars SETTINGS_NAME=cannabisdata_settings --region us-central1 --allow-unauthenticated --platform managed --memory 2Gi --cpu 2 --min-instances 0",
+    "dashboard:cloud": "gcloud run deploy cannlytics-cannabis-data --image gcr.io/cannlytics-cannabis-data/cannlytics_cannabis_data --set-env-vars SETTINGS_NAME=cannabisdata_settings --region us-central1 --allow-unauthenticated --platform managed --memory 2Gi --cpu 2 --min-instances 1",
     "dashboard:deploy": "firebase deploy --project cannlytics-cannabis-data --only hosting:production",
     "dashboard:publish": "npm run dashboard:build & npm run dashboard:container & npm run dashboard:cloud & npm run dashboard:deploy"
   },

@@ -133,3 +133,4 @@ dmypy.json
 **/node_modules/**
 **hot-update.**
 public/dashboard/**
+**/bundles/**
