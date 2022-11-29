@@ -13,7 +13,10 @@
    version="1.1"
    id="svg936"
    inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
-   sodipodi:docname="cannabis-data-logo-512.svg">
+   sodipodi:docname="cannabis-data-logo-512.svg"
+   inkscape:export-filename="C:\Users\keega\Documents\cannlytics\cannabisdata\dashboard\static\dashboard\images\logos\cannabis-data-logo-512.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96">
   <defs
      id="defs930">
     <radialGradient
@@ -64,7 +67,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

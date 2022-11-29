@@ -108,6 +108,7 @@ else:
 
 # Define apps used in the project.
 INSTALLED_APPS = [
+    PROJECT_NAME,
     'api',
     'django.contrib.admin',
     'django.contrib.auth',

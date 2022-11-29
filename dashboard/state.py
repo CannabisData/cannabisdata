@@ -184,7 +184,7 @@ material = {
             {"key": "phone_number", "label": "Phone"},
         ],
         "user_options": [
-            {"title": "Change your password", "url": "/account/password-reset"},
+            {"title": "Reset your password", "url": "/account/password-reset"},
         ],
     },
     "logs": {

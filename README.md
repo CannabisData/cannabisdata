@@ -1,7 +1,8 @@
-| Cannabis Data |  |
+|  | <img style="height:128px" alt="" src="https://firebasestorage.googleapis.com/v0/b/cannlytics-cannabis-data.appspot.com/o/public%2Fimages%2Flogos%2Fcannabis-data-logo-1024.png?alt=media&token=c92a5f8d-ab60-4c03-8cf7-795d6e73a451"> |
 |--|---|
 | Contact | <hello@cannabisdata.com> |
 | Support | <https://cannabis.observer/funding/> |
+| 
 
 ## 🌱 About Cannabis Data
 
@@ -22,13 +23,25 @@ pip install -r requirements.txt
 npm install
 ```
 
-You're then off to the races.
+You're then off to the races! The [contributing](./docs/CONTRIBUTING.md) and [publishing](./docs/publishing.md) guides can help you with more details on how to develop and publish the Cannabis Data dashboard. Once setup, you can run the dashboard locally with:
 
-<!-- Colors:
+```shell
+npm run dashboard:start
+```
 
-* Cannabis Data Purple: `#6D4488`
-* Cannabis Data Light Green: `#8cbe69ff`
-* Cannabis Data Dark Green: `#43791D` -->
+Stage the dashboard:
+
+```shell
+npm run dashboard:stage
+```
+
+And publish the dashboard:
+
+```shell
+npm run dashboard:publish
+```
+
+You now have a simple, yet complex, dashboard designed specifically to analyze large-scale cannabis data, that will automatically scale to handle your demands. You can now populate your Cannabis Data dashboard and analyze your data to your heart's content!
 
 ## 📜 License
 

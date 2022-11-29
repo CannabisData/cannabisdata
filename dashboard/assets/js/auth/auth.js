@@ -65,7 +65,7 @@ export const auth = {
     document.getElementById('password-reset-loading-button').classList.remove('d-none');
     try {
       await sendPasswordReset();
-      window.location.href = `${window.location.origin}\\acount\\password-reset-done`;
+      window.location.href = `${window.location.origin}\\account\\password-reset-done`;
     } catch(error) {
       document.getElementById('password-reset-button').classList.remove('d-none');
       document.getElementById('password-reset-loading-button').classList.add('d-none');
