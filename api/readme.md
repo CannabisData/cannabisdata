@@ -10,11 +10,11 @@ The Cannabis Data API allows users to use Cannabis Data programmatically. The AP
 
 ## Getting Started with the API <a name="getting-started"></a>
 
-Getting started making requests to the Cannlytics API can be done in 3 quick steps.
+Getting started making requests to the Cannabis Data API can be done in 3 quick steps.
 
 1. First, [create a Cannlytics account](https://console.cannlytics.com/account/sign-up).
 2. Second, [create an API key](https://console.cannlytics.com/settings/api).
-3. Third, begin making requests to the Cannlytics API with your API Key in an `Authorization: Bearer <token>` header.
+3. Third, begin making requests to the Cannabis Data API with your API Key in an `Authorization: Bearer <token>` header.
 
 For advanced usage, you can manage your authentication session with the `auth` endpoints in the table below.
 

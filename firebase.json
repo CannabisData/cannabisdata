@@ -1,75 +1,47 @@
 {
   "firestore": {
-    "indexes": ".firebase/firestore.indexes.json",
-    "rules": ".firebase/firestore.rules"
+    "rules": ".firebase/firestore.rules",
+    "indexes": ".firebase/firestore.indexes.json"
   },
   "storage": {
     "rules": ".firebase/storage.rules"
   },
-  "hosting": [
-    {
-      "target": "production",
-      "public": "public/dashboard",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
-      "rewrites": [
-        {
-          "source": "!/sitemap",
-          "run": {
-            "serviceId": "cannlytics-cannabis-data",
-            "region": "us-central1"
-          }
-        },
-        {
-          "source": "!/static",
-          "run": {
-            "serviceId": "cannlytics-cannabis-data",
-            "region": "us-central1"
-          }
-        },
-        {
-          "source": "**",
-          "run": {
-            "serviceId": "cannlytics-cannabis-data",
-            "region": "us-central1"
-          }
-        }
-      ]
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
     },
-    {
-      "target": "dev",
-      "public": "public/dashboard",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
-      "rewrites": [
-        {
-          "source": "!/sitemap",
-          "run": {
-            "serviceId": "cannlytics-cannabis-data-dev",
-            "region": "us-central1"
-          }
-        },
-        {
-          "source": "!/static",
-          "run": {
-            "serviceId": "cannlytics-cannabis-data-dev",
-            "region": "us-central1"
-          }
-        },
-        {
-          "source": "**",
-          "run": {
-            "serviceId": "cannlytics-cannabis-data-dev",
-            "region": "us-central1"
-          }
-        }
-      ]
-    }
-  ]
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "database": {
+      "port": 9000
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "pubsub": {
+      "port": 8085
+    },
+    "storage": {
+      "port": 9199
+    },
+    "eventarc": {
+      "port": 9299
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
+  }
 }

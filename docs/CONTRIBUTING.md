@@ -35,7 +35,7 @@ git clone https://github.com/cannabisdata/cannabisdata.git
 
 ### 2. Setting your account credentials <a name="setting-your-account-credentials"></a>
 
-Creating your credentials is often the most time consuming, yet important, part of installation. Once you have appropriately set all of your credentials, then you will be off to the races, safely and securely. Currently, Cannlytics expects a [Firebase account](https://console.firebase.google.com/) and a Firebase project, so [creating a Firebase project](https://firebase.google.com/docs/projects/learn-more) is often a good place to begin.
+Creating your credentials is often the most time consuming, yet important, part of installation. Once you have appropriately set all of your credentials, then you will be off to the races, safely and securely. Currently, Cannabis Data expects a [Firebase account](https://console.firebase.google.com/) and a Firebase project, so [creating a Firebase project](https://firebase.google.com/docs/projects/learn-more) is often a good place to begin.
 
 2.1. First, create an `.env` file at the project's root.
 
@@ -60,17 +60,17 @@ SECRET_KEY=xyz
 
 ```bash
 # .env
-FIREBASE_API_KEY=xyz
-FIREBASE_AUTH_DOMAIN=cannabisdata.firebaseapp.com
-FIREBASE_DATABASE_URL=https://cannabisdata.firebaseio.com
 FIREBASE_PROJECT_ID=cannabisdata
+FIREBASE_API_KEY=xyz
+FIREBASE_APP_ID=123
+FIREBASE_AUTH_DOMAIN=cannabisdata.firebaseapp.com
 FIREBASE_STORAGE_BUCKET=cannabisdata.appspot.com
 FIREBASE_MESSAGING_SENDER_ID=123
-FIREBASE_APP_ID=123
-FIREBASE_MEASUREMENT_ID=G-abc
+FIREBASE_DATABASE_URL=https://cannabisdata.firebaseio.com
+FIREBASE_HOSTING_URL=https://cannabisdata.web.app/
 ```
 
-2.5. Finally, to facilitate development and administration of your app and Firebase account, you can create and download a service account and save the path to your service account as a `GOOGLE_APPLICATION_CREDENTIALS` environment variable. These credentials will only be used for development and administrative functionality. For your security, this configuration file needs to be kept in a safe place and should be treated as a password to your account.
+2.5. Finally, to facilitate development and administration of your app and Firebase account, you can create and download a [Firebase service account](https://firebase.google.com/support/guides/service-accounts) ("Project Settings" -> "Service Accounts" -> "Generate new private key") and save the path to your key as a `GOOGLE_APPLICATION_CREDENTIALS` environment variable. These credentials will only be used for development and administrative functionality. For your security, this configuration file needs to be kept in a safe place and should be treated as a password to your account.
 
 ```bash
 # .env
@@ -87,7 +87,11 @@ If you are leveraging Secret Manager, which is the default, then you will need t
     "default": "cannabisdata"
   },
   "targets": {
+<<<<<<< HEAD
     "cannabisdata": {
+=======
+    "cannlytics-cannabis-data": {
+>>>>>>> 9a7bcfb (Minor changes to documentation; updated firebase, webpack JS versions)
       "hosting": {
         "dev": [
           "cannlytics-cannabis-data-dev"
@@ -115,11 +119,16 @@ python manage.py migrate
 npm install
 ```
 
-You are now ready to develop. Note that `python manage.py migrate` creates a new `db.sqlite3` file if you do not have one already.
+Compile JavaScript resources.
+
+```bash
+cd dashboard
+npx webpack
+```
 
 ## 🏗️ Architecture <a name="architecture"></a>
 
-Cannlytics is built with [Python](https://www.python.org/) and leverages the [Django](https://www.djangoproject.com/) framework. Cannlytics utilizes [Firebase](https://firebase.google.com/) for user authentication with [Firebase Authentication](https://firebase.google.com/docs/auth), a [Firestore](https://firebase.google.com/docs/firestore) NoSQL database for real-time data management, [Firebase Storage](https://firebase.google.com/docs/storage) for file storage, and is hosted with [Firebase Hosting](https://firebase.google.com/docs/hosting). Cannlytics uses a number of [Google Cloud](https://console.cloud.google.com/) backend services, including:
+Cannabis Data is built with [Python](https://www.python.org/) and leverages the [Django](https://www.djangoproject.com/) framework. Cannabis Data utilizes [Firebase](https://firebase.google.com/) for user authentication with [Firebase Authentication](https://firebase.google.com/docs/auth), a [Firestore](https://firebase.google.com/docs/firestore) NoSQL database for real-time data management, [Firebase Storage](https://firebase.google.com/docs/storage) for file storage, and is hosted with [Firebase Hosting](https://firebase.google.com/docs/hosting). Cannabis Data uses a number of [Google Cloud](https://console.cloud.google.com/) backend services, including:
 
   - [Cloud Build](https://cloud.google.com/build) to containerize the app.
   - [Cloud Registry](https://cloud.google.com/container-registry) to upload the app to storage.
@@ -130,11 +139,15 @@ Cannlytics is built with [Python](https://www.python.org/) and leverages the [Dj
 
 Cannabis Data generally follows a model-template-view (MTV) architectural pattern, where:
 
-- The **model** is Django, `cannlytics`, and all engine components, such as JavaScript and CSS, that contain the logic of the application, which is provided to the views.
+- The **model** is Django, `cannabisdata`, and all engine components, such as JavaScript and CSS, that contain the logic of the application, which is provided to the views.
 - The **templates** are Django HTML files that describe the display and how data are presented.
 - The **views** are Python functions that control the model's logic, specify and provide data to templates, and manage user requests.
 
+<<<<<<< HEAD
 The architecture of Cannabis Data is generally as follows:
+=======
+Cannabis Data favors a [domain-style code structure](https://stackoverflow.com/questions/40233657/ddd-what-is-proper-code-structure) for apps and material that will be edited frequently, separating Python views, HTML templates, and Javascript/CSS assets, and a [ducks-style code structure](https://www.etatvasoft.com/insights/react-design-patterns-and-structures-of-redux-and-flux/) for concepts within the apps, grouping dependencies required for a specific feature. 🦆 Ducks can inherit properties if needed, but are encouraged to be individualized and as self-contained as possible. The architecture of the Cannabis Data app is as follows.
+>>>>>>> 9a7bcfb (Minor changes to documentation; updated firebase, webpack JS versions)
 
 ```bash
 ├── .admin
@@ -181,7 +194,7 @@ The architecture of Cannabis Data is generally as follows:
 
 ## 🔨 Development <a name="development"></a>
 
-Development can happen in many avenues. Frequent, small scope pull requests are encouraged. Any contribution, even if it needs future polishing, helps build the project and advance the field of cannabis analytics. In general;
+Development can happen in many avenues. Frequent, small scope pull requests are encouraged. Any contribution, even if it needs future polishing, helps build the project and advance the field of cannabis data. In general;
 
 1. [Create a fork](https://docs.github.com/en/github/getting-started-with-github/quickstart/fork-a-repo) of the repository and set up your development environment.
 2. Work on a solution for your most-pressing problem. Be creative. 
@@ -203,7 +216,11 @@ npm run dashboard:start
 
 ### Authentication <a name="authentication"></a>
 
+<<<<<<< HEAD
 Below is a diagram that depicts how [Firebase Authentication](https://firebase.google.com/docs/auth) is used to authorize user requests.
+=======
+Below is a diagram that depicts how Cannabis Data leverages [Firebase Authentication](https://firebase.google.com/docs/auth) to authorize user requests.
+>>>>>>> 9a7bcfb (Minor changes to documentation; updated firebase, webpack JS versions)
 
 ![Authentication on Google App Engine using Firebase](https://firebasestorage.googleapis.com/v0/b/cannlytics.appspot.com/o/public%2Fimages%2Fdiagrams%2Ffirebase_auth_diagram.png?alt=media&token=ca0afc16-4829-4785-abb0-695304de802c)
 
@@ -251,7 +268,7 @@ firebase deploy --only firestore:rules
 
 ### File Storage <a name="storage"></a>
 
-[Firebase Storage](https://firebase.google.com/docs/storage) ( a.k.a Google Cloud Storage) is used for most file storage solutions. For help with storing static files, see [serving static files on App Engine](https://cloud.google.com/appengine/docs/standard/python3/serving-static-files). You can gather all supporting files, located in each app's `static` directory, into the `public/static` directory with:
+[Firebase Storage](https://firebase.google.com/docs/storage) (a.k.a Google Cloud Storage) is used for most file storage solutions. For help with storing static files, see [serving static files on App Engine](https://cloud.google.com/appengine/docs/standard/python3/serving-static-files). You can gather all supporting files, located in each app's `static` directory, into the `public/static` directory with:
 
 ```bash
 python manage.py collectstatic --noinput
@@ -343,7 +360,11 @@ docker push gcr.io/cannabisdata/cannabisdata
 
 ## 🚀 Publishing <a name="publishing"></a>
 
+<<<<<<< HEAD
 See [the publishing documentation](./publishing.md) for complete instructions on how to publish Cannabis Data to a production-grade environment. The guide is based on the [Running Django on Cloud Run guide](https://cloud.google.com/python/django/run#windows). After setup, publishing is done with one command:
+=======
+See [the publishing guide](https://docs.cannlytics.com/developers/publishing/) for complete instructions on how to publish Cannabis Data for production. The guide is based on the [Running Django on Cloud Run guide](https://cloud.google.com/python/django/run#windows). After setup, publishing is done with one command:
+>>>>>>> 9a7bcfb (Minor changes to documentation; updated firebase, webpack JS versions)
 
 ```bash
 npm run dashboard:publish
