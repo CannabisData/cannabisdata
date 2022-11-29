@@ -87,7 +87,7 @@ If you are leveraging Secret Manager, which is the default, then you will need t
     "default": "cannabisdata"
   },
   "targets": {
-    "cannlytics": {
+    "cannabisdata": {
       "hosting": {
         "dev": [
           "cannlytics-cannabis-data-dev"
@@ -128,13 +128,13 @@ Cannlytics is built with [Python](https://www.python.org/) and leverages the [Dj
   - [Cloud Secret Manager](https://cloud.google.com/secret-manager) for storing configurations and keeping secrets secret.
     <!-- * *Optional* [Cloud SQL](https://cloud.google.com/sql) can be utilized if desired. -->
 
-Cannlytics generally follows a model-template-view (MTV) architectural pattern, where:
+Cannabis Data generally follows a model-template-view (MTV) architectural pattern, where:
 
 - The **model** is Django, `cannlytics`, and all engine components, such as JavaScript and CSS, that contain the logic of the application, which is provided to the views.
 - The **templates** are Django HTML files that describe the display and how data are presented.
 - The **views** are Python functions that control the model's logic, specify and provide data to templates, and manage user requests.
 
-Cannlytics favors a [domain-style code structure](https://stackoverflow.com/questions/40233657/ddd-what-is-proper-code-structure) for apps and material that will be edited frequently, separating Python views, HTML templates, and Javascript/CSS assets, and a [ducks-style code structure](https://www.etatvasoft.com/insights/react-design-patterns-and-structures-of-redux-and-flux/) for concepts within the apps, grouping dependencies required for a specific feature. 🦆 Ducks can inherit properties if needed, but are encouraged to be individualized and as self-contained as possible. The architecture of the Cannlytics app is as follows.
+The architecture of Cannabis Data is generally as follows:
 
 ```bash
 ├── .admin
@@ -152,7 +152,7 @@ Cannlytics favors a [domain-style code structure](https://stackoverflow.com/ques
 ├── dashboard
 │   ├── assets
 │   |   ├── css # StyleSheets.
-│   |   └── js # JavaScript to be bundled into a `cannlytics` module.
+│   |   └── js # JavaScript to be bundled into a `cannabisdata` module.
 │   ├── core # Required Django configuration.
 │   ├── static/dashboard # Static files, including images and Webpack bundles.
 │   ├── templates/dashboard # User interface templates.
@@ -160,7 +160,7 @@ Cannlytics favors a [domain-style code structure](https://stackoverflow.com/ques
 │   ├── views # Controls templates, context, user requests, and application logic.
 │   ├── settings.py # Django configuration.
 │   ├── state.py # Static text for certain pages and sections.
-│   └── urls.py # Console navigation.
+│   └── urls.py # Routes and navigation.
 ├── node_modules
 ├── public
 |   └── static # Files hosted with Firebase hosting. Populated programmatically.
@@ -203,7 +203,7 @@ npm run dashboard:start
 
 ### Authentication <a name="authentication"></a>
 
-Below is a diagram that depicts how Cannlytics leverages [Firebase Authentication](https://firebase.google.com/docs/auth) to authorize user requests.
+Below is a diagram that depicts how [Firebase Authentication](https://firebase.google.com/docs/auth) is used to authorize user requests.
 
 ![Authentication on Google App Engine using Firebase](https://firebasestorage.googleapis.com/v0/b/cannlytics.appspot.com/o/public%2Fimages%2Fdiagrams%2Ffirebase_auth_diagram.png?alt=media&token=ca0afc16-4829-4785-abb0-695304de802c)
 
@@ -229,7 +229,7 @@ In another console, you start the Django development server as usual:
 python manage.py runserver
 ```
 
-You can compile JavaScript ([ES6](https://developers.google.com/web/shows/ttt/series-2/es2015)) and SCSS, utilizing [Webpack](https://webpack.js.org/). The output JavaScript bundle is a module and is callable from the user interface with the `cannlytics` namespace, handy for use in templates. You can run the build for development with:
+You can compile JavaScript ([ES6](https://developers.google.com/web/shows/ttt/series-2/es2015)) and SCSS, utilizing [Webpack](https://webpack.js.org/). The output JavaScript bundle is a module and is callable from the user interface with the `cannabisdata` namespace, handy for use in templates. You can run the build for development with:
 
 ```bash
 webpack-dev-server --env production=False
@@ -243,7 +243,11 @@ npm run dashboard:start
 
 ### Data <a name="data"></a>
 
-[Firestore](https://firebase.google.com/docs/firestore), a NoSQL database, is used by default. You can conceptualize every entity as a JSON object called a document. A group of documents is a collection. Every document is required to be a member of a collection.
+[Firestore](https://firebase.google.com/docs/firestore), a NoSQL database, is used by default. You can conceptualize every entity as a JSON object called a document. A group of documents is a collection. Every document is required to be a member of a collection. Data permissions are managed in `.firebase/firestore.rules`. You can deploy a new set of Firestore security rules with:
+
+```shell
+firebase deploy --only firestore:rules
+```
 
 ### File Storage <a name="storage"></a>
 
@@ -253,7 +257,13 @@ npm run dashboard:start
 python manage.py collectstatic --noinput
 ```
 
-You can configure static files to be served from [Firebase Storage](https://firebase.google.com/docs/storage) instead of from [Firebase Hosting](https://firebase.google.com/docs/hosting) in `console/settings.py`.
+File permissions are managed in `.firebase/storage.rules`. You can deploy a new set of storage security rules with:
+
+```shell
+firebase deploy --only storage:rules
+```
+
+You can configure where static files are served from in `dashboard/settings.py`, such as using [Cloud Storage](https://firebase.google.com/docs/storage) or AWS instead of [Firebase Hosting](https://firebase.google.com/docs/hosting).
 
 ### Views <a name="views"></a>
 
@@ -271,7 +281,7 @@ Templates are Django HTML files that describe how the data is presented. Default
 
 ### Text Material <a name="text"></a>
 
-All text material is either stored in JSON in `state.py` or written in Markdown in the `console/assets/docs` directory. There are many ways that you can extend the markdown functionality with [`python-markdown` Extensions](https://python-markdown.github.io/extensions/).
+All text material is either stored in JSON in `state.py`, written in Markdown in the `dashboard/assets/docs` directory, or retrieved from Firebase dynamically. There are many ways that you can extend the markdown functionality with [`python-markdown` Extensions](https://python-markdown.github.io/extensions/).
 
 ### Building and running the project with Docker <a name="docker"></a>
 
@@ -320,7 +330,7 @@ python manage.py check
 You can run tests for a specific app with.
 
 ```bash
-python manage.py test your_app_name
+python manage.py test cannabisdata
 ```
 
 You can also build the platform in a docker container for your specific purposes:
@@ -333,7 +343,7 @@ docker push gcr.io/cannabisdata/cannabisdata
 
 ## 🚀 Publishing <a name="publishing"></a>
 
-See [the publishing guide](https://docs.cannlytics.com/developers/publishing/) for complete instructions on how to publish Cannlytics for production. The guide is based on the [Running Django on Cloud Run guide](https://cloud.google.com/python/django/run#windows). After setup, publishing is done with one command:
+See [the publishing documentation](./publishing.md) for complete instructions on how to publish Cannabis Data to a production-grade environment. The guide is based on the [Running Django on Cloud Run guide](https://cloud.google.com/python/django/run#windows). After setup, publishing is done with one command:
 
 ```bash
 npm run dashboard:publish
@@ -364,8 +374,8 @@ gcloud beta run deploy cannabisdata --image gcr.io/cannabisdata/cannlytics --reg
 
 3. Direct hosting requests to the containerized app.
 
-This step provides access to this containerized app from a [Firebase Hosting] URL, so the app can generate dynamic content for the Firebase-hosted site.
-
 ```bash
 firebase deploy --only hosting:production
 ```
+
+This final step provides access to the containerized app from your Firebase Hosting URL. Your containerized app, running on Cloud Run, is now generating dynamic content for your Firebase-hosted site. *Carpe diem* 🎉

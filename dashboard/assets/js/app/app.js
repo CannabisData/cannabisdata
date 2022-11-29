@@ -6,7 +6,7 @@
  * Authors:
  *    Keegan Skeate <https://github.com/keeganskeate>
  * Created: 12/7/2020
- * Updated: 11/22/2022
+ * Updated: 11/29/2022
  * License: MIT License <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
  */
 import { checkForCredentials } from '../auth/auth.js';
@@ -23,32 +23,32 @@ export const app = {
 
   initialize(redirect=false) {
     /**
-     * Initialize the console's features and functionality.
-     * @param {Boolean} redirect Whether or not to redirect the user to the
-     *    dashboard (optional).
+     * Initialize the app's features and functionality.
+     * @param {Boolean} redirect Whether to redirect the user to the dashboard (optional).
      */
 
     // Enable any and all tooltips.
     initHelpers.initializeTooltips();
 
-    // Create a session when a user is detected, checking
-    // if any Google credentials may have been passed.
+    // Create a session when a user is detected, checking for any Google credentials.
     onAuthChange(async (user) => {
       if (user) {
         if (user.metadata.createdAt == user.metadata.lastLoginAt) {
           const { email } = user;
-          const defaultPhoto = `https://cannlytics.com/robohash/${user.email}?width=60&height=60`;
+          // TODO: Use your own custom domain for production.
+          const defaultPhoto = `https://cannlytics.com/robohash/${user.uid}?width=60&height=60`;
           const data = { email, photo_url: defaultPhoto };
           await authRequest('/api/users', data);
         }
+        // Only authenticate with the server as needed.
         const currentSession = this.getSessionCookie();
-        // if (currentSession === 'None')
-        await authRequest('/src/auth/login');
+        if (currentSession === 'None') await authRequest('/src/auth/login');
         if (redirect) window.location.href = window.location.origin;
       } else {
-        checkForCredentials();
-        // FIXME: If the user has not persisted their session, may need
-        // to log out the user of their Django session with /src/logout
+        // If the user has not persisted their session, then log out of their Django session.
+        await checkForCredentials();
+        const currentSession = this.getSessionCookie();
+        if (currentSession === 'None') await authRequest('/src/auth/logout');
       }
     });
 

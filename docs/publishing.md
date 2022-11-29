@@ -183,10 +183,11 @@ npm run dashboard:deploy
 
 ### Security rules
 
-You can deploy a new set of security rules with the Firebase CLI.
+Ensure that you have deployed your security rules with:
 
 ```shell
 firebase deploy --only firestore:rules
+firebase deploy --only storage:rules
 ```
 
 ## Monitoring

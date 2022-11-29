@@ -6,7 +6,7 @@
  * Authors:
  *    Keegan Skeate <https://github.com/keeganskeate>
  * Created: 12/22/2020
- * Updated: 11/22/2022
+ * Updated: 11/29/2022
  * License: MIT License <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
  */
 import { initializeApp } from 'firebase/app';
@@ -338,7 +338,7 @@ async function getUserToken(refresh = false) {
   * @param {Boolean} refresh Whether or not the credentials of the ID token should be refreshed.
   */
   if (!auth.currentUser) {
-    return await onAuthStateChanged(auth, async (user) => {
+    return onAuthStateChanged(auth, async (user) => {
       if (user) return await user.getIdToken(refresh);
     });
   } else {
