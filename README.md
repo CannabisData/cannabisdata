@@ -1,6 +1,6 @@
 |  | <img style="height:128px" alt="" src="https://firebasestorage.googleapis.com/v0/b/cannlytics-cannabis-data.appspot.com/o/public%2Fimages%2Flogos%2Fcannabis-data-logo-1024.png?alt=media&token=c92a5f8d-ab60-4c03-8cf7-795d6e73a451"> |
 |--|---|
-| Contact | <hello@cannabisdata.com> |
+| Contact | <code@cannabisdata.com> |
 | Support | <https://cannabis.observer/funding/> |
 | 
 
