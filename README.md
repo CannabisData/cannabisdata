@@ -2,7 +2,6 @@
 |--|---|
 | Contact | <code@cannabisdata.com> |
 | Support | <https://cannabis.observer/funding/> |
-| 
 
 ## 🌱 About Cannabis Data
 

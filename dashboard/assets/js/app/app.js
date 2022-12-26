@@ -6,7 +6,7 @@
  * Authors:
  *    Keegan Skeate <https://github.com/keeganskeate>
  * Created: 12/7/2020
- * Updated: 11/29/2022
+ * Updated: 12/4/2022
  * License: MIT License <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
  */
 import { checkForCredentials } from '../auth/auth.js';
@@ -30,6 +30,13 @@ export const app = {
     // Enable any and all tooltips.
     initHelpers.initializeTooltips();
 
+    // Hide the main content and show a splash page while the user is loading.
+    try {
+      document.getElementById('splash').classList.remove('d-none');
+    } catch(error) {
+      // Splash page is probably not included on this page.
+    }
+
     // Create a session when a user is detected, checking for any Google credentials.
     onAuthChange(async (user) => {
       if (user) {
@@ -44,11 +51,19 @@ export const app = {
         const currentSession = this.getSessionCookie();
         if (currentSession === 'None') await authRequest('/src/auth/login');
         if (redirect) window.location.href = window.location.origin;
+        document.getElementById('splash').classList.add('d-none');
+        document.getElementById('page').classList.remove('d-none');
       } else {
-        // If the user has not persisted their session, then log out of their Django session.
+        // If the user has not persisted their session, then log out of their
+        // Django session, and redirect to the sign in page.
         await checkForCredentials();
         const currentSession = this.getSessionCookie();
         if (currentSession === 'None') await authRequest('/src/auth/logout');
+        if (!window.location.href.includes('account')) {
+          window.location.href = `${window.location.origin}\\account\\sign-in`;
+          await page.waitForNavigation();
+        }
+        document.getElementById('page').classList.remove('d-none');
       }
     });
 

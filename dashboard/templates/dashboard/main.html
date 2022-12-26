@@ -32,8 +32,21 @@
 
   <!-- Set the theme after the body, but before the page, loads. -->
   <script>
+    document.getElementById('page').classList.add('d-none');
     cannabisdata.theme.setInitialTheme();
   </script>
+
+  <!-- Splash Page -->
+  <div
+    id="splash"
+    class="d-none h-100 w-100 d-flex align-items-center justify-content-center"
+  >
+    <img
+      src="{% static 'dashboard/images/logos/cannabis-data-text-optimized.svg' %}"
+      style="height:30px; max-width:150px;"
+      class="pe-2"
+    >
+  </div>
 
   <!-- Top Navigation -->
   {% include "dashboard/layout/topbar.html" with
