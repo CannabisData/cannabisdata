@@ -16,6 +16,7 @@ Data Source:
 """
 # Standard imports:
 from datetime import datetime
+import gc
 import os
 from zipfile import ZipFile
 
@@ -56,7 +57,12 @@ if __name__ == '__main__':
 
     # Specify where your data lives.
     DATA_DIR = 'D:\\data\\washington\\ccrs-2022-11-22\\ccrs-2022-11-22\\'
-    STATS_DIR = 'D:\\data\\washington\\ccrs-stats\\'
+    STATS_DIR = 'D:\\data\\washington\\ccrs_stats\\'
+
+    # Create stats directory if it doesn't already exist.
+    licensees_dir = os.path.join(STATS_DIR, 'licensee_stats')
+    if not os.path.exists(STATS_DIR): os.makedirs(STATS_DIR)
+    if not os.path.exists(licensees_dir): os.makedirs(licensees_dir)
 
     # Unzip all CCRS datafiles.
     unzip_ccrs(DATA_DIR)
@@ -84,6 +90,9 @@ if __name__ == '__main__':
 
     # Iterate over all sales items files.
     for i, datafile in enumerate(sales_items_files):
+
+        if i > 1:
+            break
 
         # Read in the sales items.
         items = pd.read_csv(
@@ -144,6 +153,10 @@ if __name__ == '__main__':
             )
             if len(augmented) == item_count:
                 break
+        
+        # Perform garbage cleaning.
+        del items
+        gc.collect()
 
         # At this stage, sales by licensee by day can be incremented.
         # Note: The absolute value of the `Discount` is used.
@@ -165,8 +178,32 @@ if __name__ == '__main__':
 
         # TODO: Save the augmented sales to licensee-specific files,
         # sharding as needed to keep files under 1 million observations.
+        augmented['month'] = augmented['SaleDate'].apply(lambda x: x.isoformat()[:7])
+        licensees = list(augmented['LicenseeId'].unique())
+        for licensee_id in licensees:
+            
+            # Get the licensee items.
+            licensee_items = augmented.loc[augmented['LicenseeId'] == licensee_id]
+            
+            # FIXME: Save licensee items by month, sharding if more than 1 mil.
+            
+
+            # Get any existing items.
+            # licensee_dir = os.path.join(licensees_dir, licensee_id)
+            # if not os.path.exists(licensee_dir): os.makedirs(licensee_dir)
+            # licensee_files = os.listdir(licensee_dir)
+            # if licensee_files:
+            #     filename = sorted_nicely(licensee_files)[-1]
+            #     outfile = os.path.join(licensee_dir, filename)
+            #     existing_items = pd.read_excel(outfile)
+            # else:
+            #     filename = f'sales_{licensee_id}_0.xlsx'
+            #     outfile = os.path.join(licensee_dir, filename)
+            #     existing_items = pd.DataFrame()
+            
 
 
+            
     # Compile the statistics.
     stats = []
     for licensee_id, dates in daily_licensee_sales.items():
@@ -177,30 +214,22 @@ if __name__ == '__main__':
                 **values,
             })
     
-    # TODO: Add licensee data.
+    # Optional: Add licensee data.
 
     
-    # Save the statistics.
-    timestamp = datetime.now().isoformat()[:19].replace(':', '-')
+    # Save the statistics by month.
+    sales_dir = os.path.join(STATS_DIR, 'sales')
+    if not os.path.exists(sales_dir): os.makedirs(sales_dir)
+    # timestamp = datetime.now().isoformat()[:19].replace(':', '-')
     stats = pd.DataFrame(stats)
-    stats.to_excel(f'{STATS_DIR}/sales-by-licensee.xlsx', index=False)
+    stats['month'] = stats['date'].apply(lambda x: x[:7])
+    months = list(stats['month'].unique())
+    for month in months:
+        month_stats = stats.loc[stats['month'] == month]
+        month_stats.to_excel(f'{sales_dir}/sales-by-licensee-{month}.xlsx', index=False)
+    
+    # TODO: Calculate and save aggregate statistics.
 
 
-    #--------------------------------------------------------------------------
-    # The 420 Awards
-    #--------------------------------------------------------------------------
-
-    # Who sold the most on 4/20/2022?
-    april_20 = stats.loc[stats['date'] == '2022-04-20']
-    max_april_20 = april_20.loc[april_20['total_price'] == april_20['total_price'].max()]
-    print('Who sold the most on 4/20/2022?', max_april_20.iloc[0]['licensee_id'])
-    print(f'${max_april_20.iloc[0]["total_price"]:,}')
-
-    # Who sold the most in 2022?
-    totals = stats.groupby('licensee_id').sum()
-    max_total = totals.loc[totals['total_price'] == totals['total_price'].max()]
-    print('Who sold the most in 2022?', max_total.iloc[0]['licensee_id'])
-
-    # Who had the highest single day sales?
-    max_sales = stats.loc[stats['total_price'] == stats['total_price'].max()]
-    print('Who had the highest single day sales?', max_sales.iloc[0]['licensee_id'])
+    # Save the master file.
+    stats.to_excel(f'{sales_dir}/sales-by-licensee.xlsx', index=False)
