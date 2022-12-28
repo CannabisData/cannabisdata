@@ -27,6 +27,7 @@ from diagrams.programming.flowchart import (
     Merge,
     MultipleDocuments,
 )
+from diagrams.programming.framework import Django
 
 # Download an image to be used into a Custom Node class
 # rabbitmq_url = "https://jpadilla.github.io/rabbitmqapp/assets/img/icon.png"
