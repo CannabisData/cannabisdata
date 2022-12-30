@@ -353,6 +353,7 @@
     "iprole",
     "isdigit",
     "isinstance",
+    "isna",
     "Isoborneol",
     "isopulegol",
     "iterrows",
