@@ -5,7 +5,7 @@ Copyright (c) 2022 Cannabis Data
 Authors:
     Keegan Skeate <https://github.com/keeganskeate>
 Created: 12/23/2022
-Updated: 12/29/2022
+Updated: 12/31/2022
 License: <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
 
 Data Source:
@@ -15,7 +15,6 @@ Data Source:
 
 """
 # Standard imports:
-import gc
 import os
 from typing import List, Optional
 from zipfile import ZipFile
@@ -26,8 +25,17 @@ from cannlytics.data.ccrs.constants import (
     CCRS_ANALYSES,
     CCRS_DATASETS,
 )
-from cannlytics.utils import convert_to_numeric, rmerge, sorted_nicely
+from cannlytics.utils import (
+    convert_to_numeric,
+    rmerge,
+    sorted_nicely,
+)
 import pandas as pd
+
+
+# Specify where your data lives.
+DATA_DIR = 'D:\\data\\washington\\ccrs-2022-11-22\\ccrs-2022-11-22\\'
+STATS_DIR = 'D:\\data\\washington\\ccrs-stats\\'
 
 
 def get_ccrs_datafiles(
@@ -36,9 +44,10 @@ def get_ccrs_datafiles(
         desc: Optional[bool] = True,
     ) -> list:
     """Get all CCRS datafiles of a given type in a directory."""
-    files = os.listdir(data_dir)
-    datafiles = [f'{data_dir}/{f}/{f}/{f}.csv' for f in files if f.startswith(dataset)]
-    datafiles = sorted_nicely(datafiles)
+    datafiles = sorted_nicely([
+        os.path.join(data_dir, f, f, f + '.csv')
+        for f in os.listdir(data_dir) if f.startswith(dataset)
+    ])
     if desc:
         datafiles.reverse()
     return datafiles
@@ -48,7 +57,7 @@ def unzip_ccrs(
         data_dir: str,
         verbose: Optional[bool] = True,
     ) -> None:
-    """Unzip all CCRS datafiles."""
+    """Unzip all CCRS datafiles in a given directory."""
     zip_files = [f for f in os.listdir(data_dir) if f.endswith('.zip')]
     for zip_file in zip_files:
         filename = os.path.join(data_dir, zip_file)
@@ -73,18 +82,25 @@ def merge_ccrs_datasets(
         sep: Optional[str] = '\t',
         validate: Optional[str] = 'm:1',
         rename: Optional[dict] = None,
+        on_bad_lines: Optional[str] = 'skip',
     ) -> pd.DataFrame:
-    """Merge a supplemental CCRS dataset to an existing dataset."""
+    """Merge a supplemental CCRS dataset to an existing dataset.
+    Note: `IsDeleted` and `UnitWeightGrams` are treated as strings.
+    Lab results cannot be split between datafiles.
+    """
     n = len(df)
     augmented = pd.DataFrame()
     fields = CCRS_DATASETS[dataset]['fields']
     parse_dates = CCRS_DATASETS[dataset]['date_fields']
     usecols = list(fields.keys()) + parse_dates
     dtype = {k: v for k, v in fields.items() if v != 'datetime64'}
+    # FIXME: These fields throw `ValueError` if not strings.
     if dtype.get('IsDeleted'):
-        dtype['IsDeleted'] = 'string' # Hot-fix for ValueError.
+        dtype['IsDeleted'] = 'string'
     if dtype.get('UnitWeightGrams'):
         dtype['UnitWeightGrams'] = 'string'
+    if dtype.get('TestValue'):
+        dtype['TestValue'] = 'string'
     for datafile in datafiles:
         supplement = pd.read_csv(
             datafile,
@@ -94,11 +110,13 @@ def merge_ccrs_datasets(
             parse_dates=parse_dates,
             dtype=dtype,
             usecols=usecols,
-            on_bad_lines='skip',
+            on_bad_lines=on_bad_lines,
         )
-        supplement.rename(columns=rename, axis=1)
+        if rename is not None:
+            supplement.rename(rename, axis=1, inplace=True)
+        # FIXME: Handle lab results that may be split between datafiles.
         if dataset == 'lab_results':
-            supplement = format_ccrs_lab_results(supplement)
+            supplement = format_lab_results(df, supplement)
         match = rmerge(
             df,
             supplement,
@@ -113,60 +131,82 @@ def merge_ccrs_datasets(
     return augmented
 
 
-def format_value(v, key='TestValue'):
+def format_test_value(tests, compound, value_key='TestValue'):
+    """Format a lab result test value from a DataFrame of tests."""
+    value = tests.loc[(tests.key == compound)]
     try:
-        convert_to_numeric(v.iloc[0][key])
+        return convert_to_numeric(value.iloc[0][value_key])
     except:
         return None
 
 
-def format_ccrs_lab_results(
+def find_detections(
+        tests,
+        analysis,
+        analysis_key='type',
+        analyte_key='key',
+        value_key='TestValue',
+    ) -> List[str]:
+    """Find compounds detected for a given analysis from given tests."""
+    df = tests.loc[tests[analysis_key] == analysis]
+    if df.empty:
+        return []
+    df.loc[:, value_key] = df[value_key].apply(convert_to_numeric)
+    detected = df.loc[df[value_key] > 0]
+    if detected.empty:
+        return []
+    return detected[analyte_key].to_list()
+
+
+def format_lab_results(
         df: pd.DataFrame,
         results: pd.DataFrame,
         item_key: Optional[str] = 'InventoryId',
+        analysis_name: Optional[str] = 'TestName',
+        analysis_key: Optional[str] = 'TestValue',
     ) -> pd.DataFrame:
     """Format CCRS lab results to merge into another dataset."""
-    formatted = []
-    analyte_data = results['TestName'].map(CCRS_ANALYTES).values.tolist()
+
+    # Curate lab results.
+    analyte_data = results[analysis_name].map(CCRS_ANALYTES).values.tolist()
     results = results.join(pd.DataFrame(analyte_data))
     results['type'] = results['type'].map(CCRS_ANALYSES)
+
+    # Find lab results for each item.
+    formatted = []
     item_ids = list(df[item_key].unique())
     for item_id in item_ids:
         item_results = results.loc[results[item_key].astype(str) == item_id]
-        delta_9_thc = item_results.loc[(item_results.key == 'delta_9_thc')]
-        thca = item_results.loc[(item_results.key == 'thca')]
-        total_thc = item_results.loc[(item_results.key == 'total_thc')]
-        cbd = item_results.loc[(item_results.key == 'cbd')]
-        cbda = item_results.loc[(item_results.key == 'cbda')]
-        total_cbd = item_results.loc[(item_results.key == 'total_cbd')]
-        moisture_content = item_results.loc[(item_results.key == 'moisture_content')]
-        water_activity = item_results.loc[(item_results.key == 'water_activity')]
+        if item_results.empty:
+            continue
+
+        # Map certain test values.
         values = item_results.iloc[0].to_dict()
-        [values.pop(key) for key in ['TestName', 'TestValue']]
+        [values.pop(key) for key in [analysis_name, analysis_key]]
         entry = {
             **values,
-            'delta_9_thc': format_value(delta_9_thc),
-            'thca': format_value(thca),
-            'total_thc': format_value(total_thc),
-            'cbd': format_value(cbd),
-            'cbda': format_value(cbda),
-            'total_cbd': format_value(total_cbd),
-            'moisture_content': format_value(moisture_content),
-            'water_activity': format_value(water_activity),
+            'analyses': list(item_results['type'].unique()),
+            'delta_9_thc': format_test_value(item_results, 'delta_9_thc'),
+            'thca': format_test_value(item_results, 'thca'),
+            'total_thc': format_test_value(item_results, 'total_thc'),
+            'cbd': format_test_value(item_results, 'cbd'),
+            'cbda': format_test_value(item_results, 'cbda'),
+            'total_cbd': format_test_value(item_results, 'total_cbd'),
+            'moisture_content': format_test_value(item_results, 'moisture_content'),
+            'water_activity': format_test_value(item_results, 'water_activity'),
         }
-        
+
         # Determine `status`.
         statuses = list(item_results['LabTestStatus'].unique())
         if 'Fail' in statuses:
             entry['status'] = 'Fail'
         else:
             entry['status'] = 'Pass'
-
-        # TODO: Format lab results dataframe
-        # - status
-        # - detected_pesticides
-        # - detected_solvents
-        # - detected_metals
+        
+        # Determine detected contaminants.
+        entry['pesticides'] = find_detections(item_results, 'pesticides')
+        entry['residual_solvents'] = find_detections(item_results, 'residual_solvent')
+        entry['heavy_metals'] = find_detections(item_results, 'heavy_metals')
 
         # Record the lab results for the item.
         formatted.append(entry)
@@ -263,15 +303,11 @@ def stats_to_df(stats: dict[dict]) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-# === Test ===
-if __name__ == '__main__':
+def ccrs_sales_by_licensee():
+    """Calculate CCRS licensee sales statistics."""
 
     # === Data Collection ===
-
-    # Specify where your data lives.
-    DATA_DIR = 'D:\\data\\washington\\ccrs-2022-11-22\\ccrs-2022-11-22\\'
-    STATS_DIR = 'D:\\data\\washington\\ccrs-stats\\'
-
+    
     # Create stats directory if it doesn't already exist.
     licensees_dir = os.path.join(STATS_DIR, 'licensee_stats')
     sales_dir = os.path.join(STATS_DIR, 'sales')
@@ -290,12 +326,6 @@ if __name__ == '__main__':
     item_types = {k: fields[k] for k in fields if k not in date_fields}
     item_types['IsDeleted'] = 'string'
 
-    # Define all sales headers fields.
-    supp_fields = CCRS_DATASETS['sale_headers']['fields']
-    supp_date_fields = CCRS_DATASETS['sale_headers']['date_fields']
-    supp_cols = list(supp_fields.keys()) + supp_date_fields
-    supp_types = {k: supp_fields[k] for k in supp_fields if k not in supp_date_fields}
-
     # === Data Curation ===
 
     # Read licensees data.
@@ -311,7 +341,7 @@ if __name__ == '__main__':
         },
     )
     columns = {'Name': 'retailer', 'DBA': 'retailer_dba'}
-    licensees.rename(columns=columns, inplace=True)
+    licensees.rename(columns, axis=1, inplace=True)
 
     # Iterate over all sales items files to calculate stats.
     daily_licensee_sales = {}
@@ -320,11 +350,11 @@ if __name__ == '__main__':
     product_files = get_ccrs_datafiles(DATA_DIR, 'Product_')
     lab_result_files = get_ccrs_datafiles(DATA_DIR, 'LabResult_')
     for i, datafile in enumerate(sales_items_files):
-        datafile_name = datafile.split('/')[-1]
+        print('Augmenting:', datafile)
 
         # DEV: Stop iterating early.
-        if i > 0:
-            continue
+        # if i > 0:
+        #     continue
 
         # Read in the sales items.
         items = pd.read_csv(
@@ -351,6 +381,7 @@ if __name__ == '__main__':
             sale_headers_files = get_ccrs_datafiles(DATA_DIR, 'SaleHeader_')
         else:
             sale_headers_files = get_ccrs_datafiles(DATA_DIR, 'SaleHeader_', desc=False)
+        print('Merging sale header data...')
         items = merge_ccrs_datasets(
             items,
             sale_headers_files,
@@ -360,9 +391,10 @@ if __name__ == '__main__':
             how='left',
             validate='m:1',
         )
-        print('Merged sale header data for', datafile_name)
+        print('Merged sale header data.')
 
         # Merge items with licensee data.
+        print('Merging licensee data...')
         items = rmerge(
             items,
             licensees,
@@ -370,9 +402,10 @@ if __name__ == '__main__':
             how='left',
             validate='m:1',
         )
-        print('Merged licensee data for', datafile_name)
+        print('Merged licensee data.')
 
         # Merge with inventory data to get `ProductId`.
+        print('Merging inventory data...')
         items = merge_ccrs_datasets(
             items,
             inventory_files,
@@ -388,9 +421,10 @@ if __name__ == '__main__':
                'LicenseeId': 'producer_licensee_id',
             },
         )
-        print('Merged inventory data for', datafile_name)
+        print('Merged inventory data.')
 
         # Merge items with product data.
+        print('Merging product data...')
         items = merge_ccrs_datasets(
             items,
             product_files,
@@ -406,9 +440,10 @@ if __name__ == '__main__':
                'LicenseeId': 'producer_licensee_id',
             },
         )
-        print('Merged product data for', datafile_name)
+        print('Merged product data.')
 
-        # TODO: Get lab results with `InventoryId`.
+        # Get lab results with `InventoryId`.
+        print('Merging lab result data...')
         items = merge_ccrs_datasets(
             items,
             lab_result_files,
@@ -424,32 +459,44 @@ if __name__ == '__main__':
                'LicenseeId': 'producer_licensee_id',
             },
         )
+        print('Merged lab result data.')
 
         # At this stage, sales by licensee by day can be incremented.
-        # daily_licensee_sales = calc_daily_sales(items, daily_licensee_sales)
+        print('Updating statistics...')
+        daily_licensee_sales = calc_daily_sales(items, daily_licensee_sales)
 
         # Save augmented sales to licensee-specific files by month.
-        # items['month'] = items['SaleDate'].apply(lambda x: x.isoformat()[:7])
-        # save_licensee_items_by_month(
-        #     items,
-        #     licensees_dir,
-        #     subset='SaleDetailId',
-        #     # FIXME: Pass item date columns and types.
-        #     # parse_dates=list(set(date_fields + supp_date_fields)),
-        #     # dtype={**supp_types, **item_types},
-        # )
+        items['month'] = items['SaleDate'].apply(lambda x: x.isoformat()[:7])
+        save_licensee_items_by_month(
+            items,
+            licensees_dir,
+            subset='SaleDetailId',
+            verbose=False,
+            # FIXME: Pass item date columns and types.
+            # parse_dates=list(set(date_fields + supp_date_fields)),
+            # dtype={**supp_types, **item_types},
+        )
+        print('Updated statistics and licensee items.')
     
     # === Data Analysis ===
 
     # Optional: Add licensee data.
 
     # Compile the statistics.
+    print('Compiling licensee sales statistics...')
     stats = stats_to_df(daily_licensee_sales)
 
     # Save the compiled statistics.
     stats.to_excel(f'{sales_dir}/sales-by-licensee.xlsx', index=False)
 
     # Save the statistics by month.
-    # save_stats_by_month(stats, sales_dir, 'sales-by-licensee')
+    save_stats_by_month(stats, sales_dir, 'sales-by-licensee')
 
     # TODO: Calculate and save aggregate statistics.
+
+    print('✓ Finished calculating CCRS licensee sales statistics.')
+
+
+# === Test ===
+if __name__ == '__main__':
+    ccrs_sales_by_licensee()
