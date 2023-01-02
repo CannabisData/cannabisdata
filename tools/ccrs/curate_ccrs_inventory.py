@@ -19,6 +19,7 @@ import os
 
 # External imports:
 from cannlytics.data.ccrs import (
+    anonymize,
     get_datafiles,
     merge_datasets,
     unzip_datafiles,
@@ -68,8 +69,8 @@ if __name__ == '__main__':
     item_types = {k: fields[k] for k in fields if k not in date_fields}
 
     # Create stats directory if it doesn't already exist.
-    inventory_dir = os.path.join(STATS_DIR, 'curated-inventory')
-    if not os.path.exists(STATS_DIR): os.makedirs(inventory_dir)
+    inventory_dir = os.path.join(STATS_DIR, 'inventory')
+    if not os.path.exists(inventory_dir): os.makedirs(inventory_dir)
 
     # Iterate over all inventory datafiles to curate.
     inventory_files = get_datafiles(DATA_DIR, 'Inventory_')
@@ -77,6 +78,10 @@ if __name__ == '__main__':
     lab_result_files = get_datafiles(DATA_DIR, 'LabResult_')
     for i, datafile in enumerate(inventory_files):
         print('Augmenting:', datafile)
+        
+        # DEV:
+        # if i == 0:
+        #     continue
 
         # Read in the items.
         items = pd.read_csv(
@@ -118,29 +123,28 @@ if __name__ == '__main__':
         )
         print('Merged product data.')
 
-        # Get lab results with `InventoryId`.
-        print('Merging lab result data...')
-        items = merge_datasets(
-            items,
-            lab_result_files,
-            dataset='lab_results',
-            on='InventoryId',
-            target='total_thc',
-            how='left',
-            validate='m:1',
-            rename={
-               'CreatedDate': 'lab_result_created_at',
-               'UpdatedDate': 'lab_result_updated_at',
-               'ExternalIdentifier': 'lab_result_external_id',
-               'LicenseeId': 'producer_licensee_id',
-            },
-        )
-        print('Merged lab result data.')
+        # FIXME: Get lab results with `InventoryId`.
+        # print('Merging lab result data...')
+        # items = merge_datasets(
+        #     items,
+        #     lab_result_files,
+        #     dataset='lab_results',
+        #     on='InventoryId',
+        #     target='total_thc',
+        #     how='left',
+        #     validate='m:1',
+        #     rename={
+        #        'CreatedDate': 'lab_result_created_at',
+        #        'UpdatedDate': 'lab_result_updated_at',
+        #        'ExternalIdentifier': 'lab_result_external_id',
+        #        'LicenseeId': 'producer_licensee_id',
+        #     },
+        # )
+        # print('Merged lab result data.')
 
-        # TODO: Save the curated inventory data.
-        print('TODO: Save the curated inventory data.')
+        # Save the curated inventory data.
+        print('Saving the curated inventory data...')
         outfile = os.path.join(inventory_dir, f'Inventory_{i}.xlsx')
+        items = anonymize(items)
         items.to_excel(outfile, index=False)
-        if i == 0:
-            break
         print('Curated inventory datafile:', i, '/', len(inventory_files))

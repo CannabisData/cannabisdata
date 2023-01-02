@@ -310,3 +310,16 @@ if __name__ == '__main__':
 
 
 # dtype = {k: fields[k] for k in fields if k not in parse_dates}
+
+
+# if not os.path.exists(lab_results_dir): os.makedirs(lab_results_dir)
+
+# # Determine the number of datafiles (1 million per file).
+# file_count = round((len(lab_results) + 1e6) / 1e6)
+
+# # Save each shard.
+# for i in range(0, file_count):
+#     shard = lab_results[0 + 1e6 * i: 1e6 + 1e6 * i]
+#     outfile = os.path.join(lab_results_dir, f'LabResult_{i}.xlsx')
+#     shard.to_excel(outfile, index=False)
+#     print('Saved curated lab results:', i + 1, '/', file_count)
