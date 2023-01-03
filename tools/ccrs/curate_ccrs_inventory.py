@@ -1,11 +1,12 @@
 """
 Curate CCRS Inventory
-Copyright (c) 2022 Cannabis Data
+Copyright (c) 2022-2023 Cannabis Data
 
 Authors:
     Keegan Skeate <https://github.com/keeganskeate>
+    Candace O'Sullivan-Sutherland <https://github.com/candy-o>
 Created: 1/1/2023
-Updated: 1/1/2023
+Updated: 1/3/2023
 License: <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
 
 Data Source:
@@ -19,18 +20,18 @@ import os
 
 # External imports:
 from cannlytics.data.ccrs import (
+    CCRS_DATASETS,
     anonymize,
     get_datafiles,
     merge_datasets,
     unzip_datafiles,
 )
-from cannlytics.data.ccrs.constants import CCRS_DATASETS
 from cannlytics.utils import rmerge
 import pandas as pd
 
 
 # Specify where your data lives.
-DATA_DIR = 'D:\\data\\washington\\ccrs-2022-11-22\\ccrs-2022-11-22\\'
+DATA_DIR = 'D:\\data\\washington\\CCRS PRR (12-7-22)\\CCRS PRR (12-7-22)\\'
 STATS_DIR = 'D:\\data\\washington\\ccrs-stats\\'
 
 
@@ -67,6 +68,7 @@ if __name__ == '__main__':
     date_fields = CCRS_DATASETS['inventory']['date_fields']
     item_cols = list(fields.keys()) + date_fields
     item_types = {k: fields[k] for k in fields if k not in date_fields}
+    item_types['IsDeleted'] = 'string'
 
     # Create stats directory if it doesn't already exist.
     inventory_dir = os.path.join(STATS_DIR, 'inventory')
@@ -80,8 +82,8 @@ if __name__ == '__main__':
         print('Augmenting:', datafile)
         
         # DEV:
-        # if i == 0:
-        #     continue
+        if i < 3:
+            continue
 
         # Read in the items.
         items = pd.read_csv(
@@ -144,7 +146,9 @@ if __name__ == '__main__':
 
         # Save the curated inventory data.
         print('Saving the curated inventory data...')
-        outfile = os.path.join(inventory_dir, f'Inventory_{i}.xlsx')
+        outfile = os.path.join(inventory_dir, f'inventory_{i}.xlsx')
         items = anonymize(items)
         items.to_excel(outfile, index=False)
         print('Curated inventory datafile:', i, '/', len(inventory_files))
+
+    # TODO: Merge inventory data with curated lab result data.

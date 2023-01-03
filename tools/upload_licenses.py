@@ -1,11 +1,11 @@
 """
-Populate Cannabis License Data
-Copyright (c) 2022 Cannabis Data
+Upload Cannabis License Data
+Copyright (c) 2022-2023 Cannabis Data
 
 Authors:
     Keegan Skeate <https://github.com/keeganskeate>
 Created: 11/29/2022
-Updated: 11/29/2022
+Updated: 1/3/2023
 License: <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
 
 Data Source:
@@ -15,7 +15,7 @@ Data Source:
 
 Command-line Usage:
 
-    python tools/populate_licenses.py all
+    python tools/upload_licenses.py all
 
 """
 # Standard imports:
@@ -33,7 +33,7 @@ import uuid
 DATASET = 'cannlytics/cannabis_licenses'
 
 
-def populate_cannabis_licenses(
+def upload_cannabis_licenses(
         subset: str = 'all',
         collection: str = 'licenses',
         doc_id: str = 'hex'
@@ -88,6 +88,6 @@ if __name__ == '__main__':
     except KeyError:
         subset = 'all'
 
-    # Populate Firestore with cannabis license data.
-    populate_cannabis_licenses(subset=subset)
+    # Upload Firestore with cannabis license data.
+    upload_cannabis_licenses(subset=subset)
     print('Uploaded license data to Firestore.')
