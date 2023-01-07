@@ -146,7 +146,7 @@ def curate_ccrs_lab_results(data_dir, stats_dir):
     unzip_datafiles(data_dir)
 
     # Read all lab results.
-    lab_results = read_lab_results()
+    lab_results = read_lab_results(data_dir)
 
     # Curate all lab results.
     lab_results = augment_lab_results(lab_results)
