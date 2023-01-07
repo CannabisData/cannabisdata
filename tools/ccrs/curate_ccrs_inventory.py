@@ -6,7 +6,7 @@ Authors:
     Keegan Skeate <https://github.com/keeganskeate>
     Candace O'Sullivan-Sutherland <https://github.com/candy-o>
 Created: 1/1/2023
-Updated: 1/3/2023
+Updated: 1/7/2023
 License: <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
 
 Data Source:
@@ -16,7 +16,9 @@ Data Source:
 
 """
 # Standard imports:
+from datetime import datetime
 import os
+from typing import Optional
 
 # External imports:
 from cannlytics.data.ccrs import (
@@ -24,30 +26,15 @@ from cannlytics.data.ccrs import (
     anonymize,
     get_datafiles,
     merge_datasets,
+    save_dataset,
     unzip_datafiles,
 )
-from cannlytics.utils import rmerge
+from cannlytics.utils import rmerge, sorted_nicely
 import pandas as pd
 
 
-# Specify where your data lives.
-DATA_DIR = 'D:\\data\\washington\\CCRS PRR (12-7-22)\\CCRS PRR (12-7-22)\\'
-STATS_DIR = 'D:\\data\\washington\\ccrs-stats\\'
-
-
-def curate_ccrs_inventory():
-    """Curate CCRS inventory by merging additional datasets."""
-    raise NotImplementedError
-
-
-# === Test ===
-if __name__ == '__main__':
-    # curate_ccrs_inventory()
-
-    # Unzip all CCRS datafiles.
-    unzip_datafiles(DATA_DIR)
-
-    # Read licensees data.
+def read_licensees():
+    """Read CCRS licensees data."""
     licensees = pd.read_csv(
         f'{DATA_DIR}/Licensee_0/Licensee_0/Licensee_0.csv',
         sep='\t',
@@ -60,8 +47,49 @@ if __name__ == '__main__':
         },
     )
     columns = {'Name': 'retailer', 'DBA': 'retailer_dba'}
-    licensees.rename(columns, axis=1, inplace=True)
+    return licensees.rename(columns, axis=1)
 
+
+def merge_lab_results(
+        results_file: str,
+        directory: str,
+        on: Optional[str] = 'InventoryId',
+        target: Optional[str] = 'LabResultId',
+        verbose: Optional[bool] = True,
+    ) -> pd.DataFrame:
+    """Merge lab results with items in a given directory."""
+    matched = pd.DataFrame()
+    lab_results = pd.read_excel(results_file)
+    lab_results[on] = lab_results[on].astype(str)
+    datafiles = sorted_nicely(os.listdir(directory))
+    for datafile in datafiles:
+        data = pd.read_excel(os.path.join(directory, datafile))
+        data[on] = data[on].astype(str)
+        match = rmerge(
+            data,
+            lab_results,
+            on=on,
+            how='left',
+            validate='m:1',
+        )
+        match = match.loc[~match[target].isna()]
+        matched = pd.concat([matched, match], ignore_index=True)
+        if verbose:
+            print('Matched lab results:', len(matched))
+    return matched
+
+
+def curate_ccrs_inventory(data_dir, stats_dir):
+    """Curate CCRS inventory by merging additional datasets."""
+    print('Curating inventory...')
+    start = datetime.now()
+    
+    # Unzip all CCRS datafiles.
+    unzip_datafiles(data_dir)
+
+    # Read licensees data.
+    licensees = read_licensees()
+    
     # Define all fields.
     # Note: `IsDeleted` throws a ValueError if it's a bool.
     fields = CCRS_DATASETS['inventory']['fields']
@@ -71,19 +99,16 @@ if __name__ == '__main__':
     item_types['IsDeleted'] = 'string'
 
     # Create stats directory if it doesn't already exist.
-    inventory_dir = os.path.join(STATS_DIR, 'inventory')
+    inventory_dir = os.path.join(stats_dir, 'inventory')
     if not os.path.exists(inventory_dir): os.makedirs(inventory_dir)
 
     # Iterate over all inventory datafiles to curate.
-    inventory_files = get_datafiles(DATA_DIR, 'Inventory_')
-    product_files = get_datafiles(DATA_DIR, 'Product_')
-    lab_result_files = get_datafiles(DATA_DIR, 'LabResult_')
+    inventory_files = get_datafiles(data_dir, 'Inventory_')
+    product_files = get_datafiles(data_dir, 'Product_')
+    strain_files = get_datafiles(data_dir, 'Strains_')
+    area_files = get_datafiles(data_dir, 'Areas_')
     for i, datafile in enumerate(inventory_files):
         print('Augmenting:', datafile)
-        
-        # DEV:
-        if i < 3:
-            continue
 
         # Read in the items.
         items = pd.read_csv(
@@ -95,7 +120,7 @@ if __name__ == '__main__':
             dtype=item_types,
         )
 
-        # Merge items with licensee data.
+        # Merge licensee data using `LicenseeId`.
         print('Merging licensee data...')
         items = rmerge(
             items,
@@ -106,7 +131,7 @@ if __name__ == '__main__':
         )
         print('Merged licensee data.')
 
-        # Merge items with product data.
+        # Merge product data using `ProductId`.
         print('Merging product data...')
         items = merge_datasets(
             items,
@@ -125,30 +150,70 @@ if __name__ == '__main__':
         )
         print('Merged product data.')
 
-        # FIXME: Get lab results with `InventoryId`.
-        # print('Merging lab result data...')
-        # items = merge_datasets(
-        #     items,
-        #     lab_result_files,
-        #     dataset='lab_results',
-        #     on='InventoryId',
-        #     target='total_thc',
-        #     how='left',
-        #     validate='m:1',
-        #     rename={
-        #        'CreatedDate': 'lab_result_created_at',
-        #        'UpdatedDate': 'lab_result_updated_at',
-        #        'ExternalIdentifier': 'lab_result_external_id',
-        #        'LicenseeId': 'producer_licensee_id',
-        #     },
-        # )
-        # print('Merged lab result data.')
+        # Merge strain `Name` using `StrainId`.
+        print('Merging strain data...')
+        items = merge_datasets(
+            items,
+            strain_files,
+            dataset='strains',
+            on='StrainId',
+            target='StrainId',
+            how='left',
+            validate='m:1',
+            rename={
+               'Name': 'strain_name',
+               'CreatedDate': 'strain_created_date',
+            },
+            drop=['CreatedBy', 'UpdatedBy', 'UpdatedDate'],
+        )
+        print('Merged strain data.')
+
+        # Merge area `Name` using `AreaId`.
+        print('Merging area data...')
+        items = merge_datasets(
+            items,
+            area_files,
+            dataset='areas',
+            on='AreaId',
+            target='AreaId',
+            how='left',
+            validate='m:1',
+            rename={
+               'Name': 'area_name',
+            },
+            drop=['LicenseeId', 'IsQuarantine', 'ExternalIdentifier',
+            'IsDeleted', 'CreatedBy', 'CreatedDate', 'UpdatedBy', 'UpdatedDate']
+        )
+        print('Merged area data.')
 
         # Save the curated inventory data.
         print('Saving the curated inventory data...')
         outfile = os.path.join(inventory_dir, f'inventory_{i}.xlsx')
         items = anonymize(items)
         items.to_excel(outfile, index=False)
-        print('Curated inventory datafile:', i, '/', len(inventory_files))
+        print('Curated inventory datafile:', i + 1, '/', len(inventory_files))
 
-    # TODO: Merge inventory data with curated lab result data.
+    # Merge and save inventory data with curated lab result data.
+    try:
+        inventory_dir = os.path.join(stats_dir, 'inventory')
+        inventory_files = sorted_nicely(os.listdir(inventory_dir))
+        lab_results_dir = os.path.join(stats_dir, 'lab_results')
+        results_file = os.path.join(lab_results_dir, 'lab_results_0.xlsx')
+        matched = merge_lab_results(results_file, inventory_dir)        
+        save_dataset(matched, lab_results_dir, 'inventory_lab_results')
+        print('Merged inventory items with curated lab results.')
+    except:
+        print('Failed to merge lab results. Curate lab results first.')
+
+    end = datetime.now()
+    print('✓ Finished curating inventory in', end - start)
+
+
+# === Test ===
+if __name__ == '__main__':
+
+    # Specify where your data lives.
+    base = 'D:\\data\\washington\\'
+    DATA_DIR = f'{base}\\CCRS PRR (12-7-22)\\CCRS PRR (12-7-22)\\'
+    STATS_DIR = f'{base}\\ccrs-stats\\'
+    curate_ccrs_inventory(DATA_DIR, STATS_DIR)

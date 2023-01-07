@@ -18,14 +18,14 @@ import os
 import re
 
 # External imports.
-# import environ
-from cannlytics.firebase import initialize_firebase
+from cannlytics.firebase import (
+    access_secret_version,
+    initialize_firebase,
+)
 from dotenv import dotenv_values
 import google.auth
 from django.template import base
 
-# Internal imports.
-from cannlytics.firebase import access_secret_version
 
 #-------------------------------------------------------------#
 # Project variables

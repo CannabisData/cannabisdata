@@ -6,7 +6,7 @@ Authors:
     Keegan Skeate <https://github.com/keeganskeate>
     Candace O'Sullivan-Sutherland <https://github.com/candy-o>
 Created: 1/1/2023
-Updated: 1/3/2023
+Updated: 1/7/2023
 License: <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
 
 Data Source:
@@ -36,15 +36,10 @@ from cannlytics.utils import convert_to_numeric
 import pandas as pd
 
 
-# Specify where your data lives.
-DATA_DIR = 'D:\\data\\washington\\CCRS PRR (12-7-22)\\CCRS PRR (12-7-22)\\'
-STATS_DIR = 'D:\\data\\washington\\ccrs-stats\\'
-
-
-def read_lab_results() -> pd.DataFrame:
+def read_lab_results(data_dir) -> pd.DataFrame:
     """Read CCRS lab results."""
     lab_results = pd.DataFrame()
-    lab_result_files = get_datafiles(DATA_DIR, 'LabResult_')
+    lab_result_files = get_datafiles(data_dir, 'LabResult_')
     fields = CCRS_DATASETS['lab_results']['fields']
     parse_dates = CCRS_DATASETS['lab_results']['date_fields']
     usecols = list(fields.keys()) + parse_dates
@@ -67,7 +62,7 @@ def read_lab_results() -> pd.DataFrame:
     return lab_results
 
 
-def curate_ccrs_lab_results(
+def augment_lab_results(
         results: pd.DataFrame,
         item_key: Optional[str] = 'InventoryId',
         analysis_name: Optional[str] = 'TestName',
@@ -120,6 +115,18 @@ def curate_ccrs_lab_results(
         entry['residual_solvents'] = find_detections(item_results, 'residual_solvents')
         entry['heavy_metals'] = find_detections(item_results, 'heavy_metals')
 
+        # Augment the `results`.
+        entry_results = []
+        for _, item_result in item_results.iterrows():
+            entry_results.append({
+                'analysis': item_result['type'],
+                'key': item_result['key'],
+                'name': item_result['TestName'],
+                'units': item_result['units'],
+                'value': item_result['TestValue'],
+            })
+        entry['results'] = entry_results
+
         # Record the lab results for the item.
         curated_results.append(entry)
         if verbose and (n + 1) % 1_000 == 0:
@@ -130,25 +137,34 @@ def curate_ccrs_lab_results(
     return pd.DataFrame(curated_results)
 
 
-# === Test ===
-if __name__ == '__main__':
-
+def curate_ccrs_lab_results(data_dir, stats_dir):
+    """Curate CCRS lab results."""
     print('Curating lab results...')
     start = datetime.now()
 
     # Unzip all CCRS datafiles.
-    unzip_datafiles(DATA_DIR)
+    unzip_datafiles(data_dir)
 
     # Read all lab results.
     lab_results = read_lab_results()
 
     # Curate all lab results.
-    lab_results = curate_ccrs_lab_results(lab_results)
+    lab_results = augment_lab_results(lab_results)
 
     # Save the curated lab results.
-    lab_results_dir = os.path.join(STATS_DIR, 'lab_results')
+    lab_results_dir = os.path.join(stats_dir, 'lab_results')
     lab_results = anonymize(lab_results)
     save_dataset(lab_results, lab_results_dir, 'lab_results')
 
     end = datetime.now()
     print('✓ Finished curating lab results in', end - start)
+
+
+# === Test ===
+if __name__ == '__main__':
+
+    # Specify where your data lives.
+    base = 'D:\\data\\washington\\'
+    DATA_DIR = f'{base}\\CCRS PRR (12-7-22)\\CCRS PRR (12-7-22)\\'
+    STATS_DIR = f'{base}\\ccrs-stats\\'
+    curate_ccrs_lab_results(DATA_DIR, STATS_DIR)
