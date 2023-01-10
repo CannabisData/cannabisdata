@@ -6,7 +6,7 @@ Authors:
     Keegan Skeate <https://github.com/keeganskeate>
     Candace O'Sullivan-Sutherland <https://github.com/candy-o>
 Created: 1/1/2023
-Updated: 1/7/2023
+Updated: 1/8/2023
 License: <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
 
 Data Source:
@@ -32,11 +32,14 @@ from cannlytics.data.ccrs import (
     save_dataset,
     unzip_datafiles,
 )
-from cannlytics.utils import convert_to_numeric
+from cannlytics.utils import convert_to_numeric, camel_to_snake
 import pandas as pd
 
 
-def read_lab_results(data_dir) -> pd.DataFrame:
+def read_lab_results(
+        data_dir: str,
+        value_key: Optional[str] = 'TestValue',
+    ) -> pd.DataFrame:
     """Read CCRS lab results."""
     lab_results = pd.DataFrame()
     lab_result_files = get_datafiles(data_dir, 'LabResult_')
@@ -44,7 +47,7 @@ def read_lab_results(data_dir) -> pd.DataFrame:
     parse_dates = CCRS_DATASETS['lab_results']['date_fields']
     usecols = list(fields.keys()) + parse_dates
     dtype = {k: v for k, v in fields.items() if v != 'datetime64'}
-    dtype['TestValue'] = 'string' # Hot-fix for `ValueError`.
+    dtype[value_key] = 'string' # Hot-fix for `ValueError`.
     for datafile in lab_result_files:
         data = pd.read_csv(
             datafile,
@@ -55,9 +58,11 @@ def read_lab_results(data_dir) -> pd.DataFrame:
             dtype=dtype,
             usecols=usecols,
             on_bad_lines='skip',
+            # DEV: Uncomment to make development quicker.
+            # nrows=1000,
         )
         lab_results = pd.concat([lab_results, data])
-    values = lab_results['TestValue'].apply(convert_to_numeric)
+    values = lab_results[value_key].apply(convert_to_numeric)
     lab_results = lab_results.assign(TestValue=values)
     return lab_results
 
@@ -77,9 +82,17 @@ def augment_lab_results(
     results['type'] = results['type'].map(CCRS_ANALYSES)
 
     # Find lab results for each item.
+    # FIXME: This is ridiculously slow. Is there any way to optimize?
     curated_results = []
     item_ids = list(results[item_key].unique())
-    drop = [analysis_name, analysis_key, 'key', 'type', 'units']
+    drop = [
+        analysis_name,
+        analysis_key,
+        'LabTestStatus',
+        'key',
+        'type',
+        'units',
+    ]
     if verbose:
         print('Curating', len(item_ids), 'items...')
     for n, item_id in enumerate(item_ids):
@@ -88,11 +101,10 @@ def augment_lab_results(
             continue
 
         # Map certain test values.
-        values = item_results.iloc[0].to_dict()
-        [values.pop(key) for key in drop]
+        item = item_results.iloc[0].to_dict()
+        [item.pop(key) for key in drop]
         entry = {
-            **values,
-            'analyses': list(item_results['type'].unique()),
+            **item,
             'delta_9_thc': format_test_value(item_results, 'delta_9_thc'),
             'thca': format_test_value(item_results, 'thca'),
             'total_thc': format_test_value(item_results, 'total_thc'),
@@ -110,22 +122,29 @@ def augment_lab_results(
         else:
             entry['status'] = 'Pass'
 
-        # Determine detected contaminants.
-        entry['pesticides'] = find_detections(item_results, 'pesticides')
-        entry['residual_solvents'] = find_detections(item_results, 'residual_solvents')
-        entry['heavy_metals'] = find_detections(item_results, 'heavy_metals')
-
         # Augment the `results`.
         entry_results = []
         for _, item_result in item_results.iterrows():
+            test_name = item_result['TestName']
+            analyte = CCRS_ANALYTES[test_name]
+            try:
+                analysis = CCRS_ANALYSES[analyte['type']]
+            except KeyError:
+                print('Unidentified analysis:', analyte['type'])
+                analysis = analyte['type']
             entry_results.append({
-                'analysis': item_result['type'],
-                'key': item_result['key'],
+                'analysis': analysis,
+                'key': analyte['key'],
                 'name': item_result['TestName'],
-                'units': item_result['units'],
+                'units': analyte['units'],
                 'value': item_result['TestValue'],
             })
         entry['results'] = entry_results
+
+        # Determine detected contaminants.
+        entry['pesticides'] = find_detections(entry_results, 'pesticides')
+        entry['residual_solvents'] = find_detections(entry_results, 'residual_solvents')
+        entry['heavy_metals'] = find_detections(entry_results, 'heavy_metals')
 
         # Record the lab results for the item.
         curated_results.append(entry)
@@ -139,6 +158,8 @@ def augment_lab_results(
 
 def curate_ccrs_lab_results(data_dir, stats_dir):
     """Curate CCRS lab results."""
+
+    # Start curating lab results.
     print('Curating lab results...')
     start = datetime.now()
 
@@ -154,8 +175,11 @@ def curate_ccrs_lab_results(data_dir, stats_dir):
     # Save the curated lab results.
     lab_results_dir = os.path.join(stats_dir, 'lab_results')
     lab_results = anonymize(lab_results)
-    save_dataset(lab_results, lab_results_dir, 'lab_results')
+    lab_results.rename(columns={'ExternalIdentifier': 'lab_id'}, inplace=True)
+    lab_results.rename(columns=lambda x: camel_to_snake(x), inplace=True)
+    save_dataset(lab_results, lab_results_dir, 'lab_results_test')
 
+    # Finish curating lab results.
     end = datetime.now()
     print('✓ Finished curating lab results in', end - start)
 
