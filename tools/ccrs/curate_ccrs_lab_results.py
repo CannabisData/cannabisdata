@@ -177,7 +177,7 @@ def curate_ccrs_lab_results(data_dir, stats_dir):
     lab_results = anonymize(lab_results)
     lab_results.rename(columns={'ExternalIdentifier': 'lab_id'}, inplace=True)
     lab_results.rename(columns=lambda x: camel_to_snake(x), inplace=True)
-    save_dataset(lab_results, lab_results_dir, 'lab_results_test')
+    save_dataset(lab_results, lab_results_dir, 'lab_results')
 
     # Finish curating lab results.
     end = datetime.now()
