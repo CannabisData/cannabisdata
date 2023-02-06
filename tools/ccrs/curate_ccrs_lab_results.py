@@ -6,17 +6,18 @@ Authors:
     Keegan Skeate <https://github.com/keeganskeate>
     Candace O'Sullivan-Sutherland <https://github.com/candy-o>
 Created: 1/1/2023
-Updated: 1/8/2023
+Updated: 2/6/2023
 License: <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
 
 Data Source:
 
     - Washington State Liquor and Cannabis Board (WSLCB)
-    URL: <https://lcb.box.com/s/xseghpsq2t4i1musxj6mgd7b8rhxe7bm>
+    URL: <https://lcb.box.com/s/wzfoqysl4v9aqljwc0pi0g5ea6bch759>
 
 """
 # Standard imports:
 from datetime import datetime
+import gc
 import os
 from typing import Optional
 
@@ -76,13 +77,30 @@ def augment_lab_results(
     ) -> pd.DataFrame:
     """Format CCRS lab results to merge into another dataset."""
 
+    # Handle `TestName`'s that are not in known analytes.
+    results[analysis_name] = results[analysis_name].apply(
+        lambda x: x.replace('Pesticides - ', '').replace(' (ppm) (ppm)', '')
+    )
+
+    # Future work: Handle unidentified analyses. Ask GPT?
+    test_names = list(results[analysis_name].unique())
+    known_analytes = list(CCRS_ANALYTES.keys())
+    missing = list(set(test_names) - set(known_analytes))
+    try:
+        assert len(missing) == 0
+        del test_names, known_analytes, missing
+        gc.collect()
+    except:
+        print('Unidentified analytes:', len(missing))
+        raise ValueError('Unidentified analytes. Standardize with `CCRS_ANALYTES`.')
+
     # Augment lab results with standard analyses and analyte keys.
     analyte_data = results[analysis_name].map(CCRS_ANALYTES).values.tolist()
     results = results.join(pd.DataFrame(analyte_data))
     results['type'] = results['type'].map(CCRS_ANALYSES)
+    results[item_key] = results[item_key].astype(str)
 
-    # Find lab results for each item.
-    # FIXME: This is ridiculously slow. Is there any way to optimize?
+    # Setup for iteration.    
     curated_results = []
     item_ids = list(results[item_key].unique())
     drop = [
@@ -93,14 +111,21 @@ def augment_lab_results(
         'type',
         'units',
     ]
+    N = len(item_ids)
     if verbose:
-        print('Curating', len(item_ids), 'items...')
+        print('Curating', N, 'items...')
+        print('Estimated runtime:', round(N * 0.00016, 2), 'hours')
+
+    # Find lab results for each item by iterating over all items.
+    # FIXME: This is ridiculously slow. Is there any way to optimize?
     for n, item_id in enumerate(item_ids):
-        item_results = results.loc[results[item_key].astype(str) == item_id]
+
+        # Find all lab results for the given item.
+        item_results = results.loc[results[item_key] == item_id]
         if item_results.empty:
             continue
 
-        # Map certain test values.
+        # Record important test values for future queries.
         item = item_results.iloc[0].to_dict()
         [item.pop(key) for key in drop]
         entry = {
@@ -115,7 +140,7 @@ def augment_lab_results(
             'water_activity': format_test_value(item_results, 'water_activity'),
         }
 
-        # Determine `status`.
+        # Determine "Pass" or "Fail" status.
         statuses = list(item_results['LabTestStatus'].unique())
         if 'Fail' in statuses:
             entry['status'] = 'Fail'
@@ -149,7 +174,7 @@ def augment_lab_results(
         # Record the lab results for the item.
         curated_results.append(entry)
         if verbose and (n + 1) % 1_000 == 0:
-            percent = round((n + 1) / len(item_ids) * 100, 2)
+            percent = round((n + 1) / N * 100, 2)
             print(f'Curated: {n + 1} ({percent}%)')
 
     # Return the curated lab results.
@@ -189,6 +214,6 @@ if __name__ == '__main__':
 
     # Specify where your data lives.
     base = 'D:\\data\\washington\\'
-    DATA_DIR = f'{base}\\CCRS PRR (12-7-22)\\CCRS PRR (12-7-22)\\'
+    DATA_DIR = f'{base}\\CCRS PRR (1-27-23)\\CCRS PRR (1-27-23)\\'
     STATS_DIR = f'{base}\\ccrs-stats\\'
     curate_ccrs_lab_results(DATA_DIR, STATS_DIR)

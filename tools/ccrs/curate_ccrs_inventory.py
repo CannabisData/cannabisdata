@@ -6,13 +6,13 @@ Authors:
     Keegan Skeate <https://github.com/keeganskeate>
     Candace O'Sullivan-Sutherland <https://github.com/candy-o>
 Created: 1/1/2023
-Updated: 1/7/2023
+Updated: 2/6/2023
 License: <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
 
 Data Source:
 
     - Washington State Liquor and Cannabis Board (WSLCB)
-    URL: <https://lcb.box.com/s/xseghpsq2t4i1musxj6mgd7b8rhxe7bm>
+    URL: <https://lcb.box.com/s/wzfoqysl4v9aqljwc0pi0g5ea6bch759>
 
 """
 # Standard imports:
@@ -29,7 +29,7 @@ from cannlytics.data.ccrs import (
     save_dataset,
     unzip_datafiles,
 )
-from cannlytics.utils import rmerge, sorted_nicely
+from cannlytics.utils import camel_to_snake, rmerge, sorted_nicely
 import pandas as pd
 
 
@@ -60,6 +60,10 @@ def merge_lab_results(
     """Merge lab results with items in a given directory."""
     matched = pd.DataFrame()
     lab_results = pd.read_excel(results_file)
+    lab_results.rename(columns={
+        'inventory_id': 'InventoryId',
+        'lab_result_id': target,
+    }, inplace=True)
     lab_results[on] = lab_results[on].astype(str)
     datafiles = sorted_nicely(os.listdir(directory))
     for datafile in datafiles:
@@ -75,7 +79,7 @@ def merge_lab_results(
         match = match.loc[~match[target].isna()]
         matched = pd.concat([matched, match], ignore_index=True)
         if verbose:
-            print('Matched lab results:', len(matched))
+            print('Matched', len(matched), 'lab results...')
     return matched
 
 
@@ -83,13 +87,13 @@ def curate_ccrs_inventory(data_dir, stats_dir):
     """Curate CCRS inventory by merging additional datasets."""
     print('Curating inventory...')
     start = datetime.now()
-    
+
     # Unzip all CCRS datafiles.
     unzip_datafiles(data_dir)
 
     # Read licensees data.
     licensees = read_licensees()
-    
+
     # Define all fields.
     # Note: `IsDeleted` throws a ValueError if it's a bool.
     fields = CCRS_DATASETS['inventory']['fields']
@@ -107,6 +111,8 @@ def curate_ccrs_inventory(data_dir, stats_dir):
     product_files = get_datafiles(data_dir, 'Product_')
     strain_files = get_datafiles(data_dir, 'Strains_')
     area_files = get_datafiles(data_dir, 'Areas_')
+    print(len(inventory_files), 'datafiles to curate.')
+    print('Estimated runtime:', len(inventory_files) * 0.25 + 1.5, 'hours')
     for i, datafile in enumerate(inventory_files):
         print('Augmenting:', datafile)
 
@@ -129,7 +135,6 @@ def curate_ccrs_inventory(data_dir, stats_dir):
             how='left',
             validate='m:1',
         )
-        print('Merged licensee data.')
 
         # Merge product data using `ProductId`.
         print('Merging product data...')
@@ -148,7 +153,6 @@ def curate_ccrs_inventory(data_dir, stats_dir):
                'LicenseeId': 'producer_licensee_id',
             },
         )
-        print('Merged product data.')
 
         # Merge strain `Name` using `StrainId`.
         print('Merging strain data...')
@@ -166,7 +170,6 @@ def curate_ccrs_inventory(data_dir, stats_dir):
             },
             drop=['CreatedBy', 'UpdatedBy', 'UpdatedDate'],
         )
-        print('Merged strain data.')
 
         # Merge area `Name` using `AreaId`.
         print('Merging area data...')
@@ -184,9 +187,9 @@ def curate_ccrs_inventory(data_dir, stats_dir):
             drop=['LicenseeId', 'IsQuarantine', 'ExternalIdentifier',
             'IsDeleted', 'CreatedBy', 'CreatedDate', 'UpdatedBy', 'UpdatedDate']
         )
-        print('Merged area data.')
 
         # Save the curated inventory data.
+        # FIXME: This takes a long time.
         print('Saving the curated inventory data...')
         outfile = os.path.join(inventory_dir, f'inventory_{i}.xlsx')
         items = anonymize(items)
@@ -195,11 +198,13 @@ def curate_ccrs_inventory(data_dir, stats_dir):
 
     # Merge and save inventory data with curated lab result data.
     try:
+        print('Merging lab results...')
         inventory_dir = os.path.join(stats_dir, 'inventory')
         inventory_files = sorted_nicely(os.listdir(inventory_dir))
         lab_results_dir = os.path.join(stats_dir, 'lab_results')
         results_file = os.path.join(lab_results_dir, 'lab_results_0.xlsx')
-        matched = merge_lab_results(results_file, inventory_dir)        
+        matched = merge_lab_results(results_file, inventory_dir)
+        matched.rename(columns=lambda x: camel_to_snake(x), inplace=True)
         save_dataset(matched, lab_results_dir, 'inventory_lab_results')
         print('Merged inventory items with curated lab results.')
     except:
@@ -214,6 +219,6 @@ if __name__ == '__main__':
 
     # Specify where your data lives.
     base = 'D:\\data\\washington\\'
-    DATA_DIR = f'{base}\\CCRS PRR (12-7-22)\\CCRS PRR (12-7-22)\\'
+    DATA_DIR = f'{base}\\CCRS PRR (1-27-23)\\CCRS PRR (1-27-23)\\'
     STATS_DIR = f'{base}\\ccrs-stats\\'
     curate_ccrs_inventory(DATA_DIR, STATS_DIR)

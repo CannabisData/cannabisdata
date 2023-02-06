@@ -4,14 +4,15 @@ Copyright (c) 2022-2023 Cannabis Data
 
 Authors:
     Keegan Skeate <https://github.com/keeganskeate>
+    Candace O'Sullivan-Sutherland <https://github.com/candy-o>
 Created: 1/1/2023
-Updated: 1/7/2023
+Updated: 2/6/2023
 License: <https://github.com/cannabisdata/cannabisdata/blob/main/LICENSE>
 
 Data Source:
 
     - Washington State Liquor and Cannabis Board (WSLCB)
-    URL: <https://lcb.box.com/s/xseghpsq2t4i1musxj6mgd7b8rhxe7bm>
+    URL: <https://lcb.box.com/s/wzfoqysl4v9aqljwc0pi0g5ea6bch759>
 
 """
 # Standard imports:
@@ -120,6 +121,7 @@ def stats_to_df(stats: dict[dict]) -> pd.DataFrame:
 
 def curate_ccrs_sales(data_dir, stats_dir):
     """Curate CCRS sales by merging additional datasets."""
+
     print('Curating sales...')
     start = datetime.now()
 
@@ -127,7 +129,7 @@ def curate_ccrs_sales(data_dir, stats_dir):
     unzip_datafiles(data_dir)
 
     # Create stats directory if it doesn't already exist.
-    licensees_dir = os.path.join(STATS_DIR, 'licensee_stats')
+    licensees_dir = os.path.join(stats_dir, 'licensee_stats')
     sales_dir = os.path.join(stats_dir, 'sales')
     if not os.path.exists(licensees_dir): os.makedirs(licensees_dir)
     if not os.path.exists(stats_dir): os.makedirs(sales_dir)
@@ -147,8 +149,10 @@ def curate_ccrs_sales(data_dir, stats_dir):
     lab_results_dir = os.path.join(stats_dir, 'lab_results')
     results_file = os.path.join(lab_results_dir, 'lab_results_0.xlsx')
     sales_items_files = get_datafiles(data_dir, 'SalesDetail_')
+    # sales_items_files.reverse()
     for i, datafile in enumerate(sales_items_files):
         print('Augmenting:', datafile)
+        midpoint_start = datetime.now()
 
         # Read in the sales items.
         items = pd.read_csv(
@@ -172,9 +176,9 @@ def curate_ccrs_sales(data_dir, stats_dir):
         # current to earliest then reads earliest to current for the
         # 2nd half to try to reduce unnecessary reads.
         if i < len(sales_items_files) / 2:
-            sale_headers_files = get_datafiles(DATA_DIR, 'SaleHeader_')
+            sale_headers_files = get_datafiles(data_dir, 'SaleHeader_')
         else:
-            sale_headers_files = get_datafiles(DATA_DIR, 'SaleHeader_', desc=False)
+            sale_headers_files = get_datafiles(data_dir, 'SaleHeader_', desc=False)
         print('Merging sale header data...')
         items = merge_datasets(
             items,
@@ -185,13 +189,26 @@ def curate_ccrs_sales(data_dir, stats_dir):
             how='left',
             validate='m:1',
         )
-        print('Merged sale header data.')
 
         # Augment with curated inventory.
         print('Merging inventory data...')
         for datafile in inventory_files:
-            data = pd.read_excel(datafile)
+            try:
+                data = pd.read_excel(os.path.join(inventory_dir, datafile))
+            except:
+                continue
             data['InventoryId'] = data['InventoryId'].astype(str)
+            # FIXME: Why are there duplicates?
+            data.drop_duplicates(subset='InventoryId', keep='first', inplace=True)
+            data.rename(columns={
+                'inventory_id': 'InventoryId',
+                'CreatedBy': 'inventory_created_by',
+                'CreatedDate': 'inventory_created_date',
+                'UpdatedBy': 'inventory_updated_by',
+                'UpdatedDate': 'product_updated_date',
+                'updatedDate': 'inventory_updated_date',
+                'LicenseeId': 'inventory_licensee_id',
+            }, inplace=True)
             items = rmerge(
                 items,
                 data,
@@ -199,11 +216,18 @@ def curate_ccrs_sales(data_dir, stats_dir):
                 how='left',
                 validate='m:1',
             )
-        print('Merged inventory data.')
 
         # Augment with curated lab results.
+        # FIXME: This appears to be overwriting data points.
         print('Merging lab result data...')
         data = pd.read_excel(results_file)
+        data.rename(columns={
+            'inventory_id': 'InventoryId',
+            'created_by': 'results_created_by',
+            'created_date': 'results_created_date',
+            'updated_by': 'results_updated_by',
+            'updated_date': 'results_updated_date',
+        }, inplace=True)
         data['InventoryId'] = data['InventoryId'].astype(str)
         items = rmerge(
             items,
@@ -212,13 +236,13 @@ def curate_ccrs_sales(data_dir, stats_dir):
             how='left',
             validate='m:1',
         )
-        print('Merged lab result data.')
 
         # At this stage, sales by licensee by day can be incremented.
-        print('Updating sales statistics...')
-        daily_licensee_sales = calc_daily_sales(items, daily_licensee_sales)
+        # print('Updating sales statistics...')
+        # daily_licensee_sales = calc_daily_sales(items, daily_licensee_sales)
 
         # Save augmented sales to licensee-specific files by month.
+        print('Saving augmented sales...')
         items['month'] = items['SaleDate'].apply(lambda x: x.isoformat()[:7])
         save_licensee_items_by_month(
             items,
@@ -229,19 +253,8 @@ def curate_ccrs_sales(data_dir, stats_dir):
             # parse_dates=list(set(date_fields + supp_date_fields)),
             # dtype={**supp_types, **item_types},
         )
-        print('Updated sales statistics and licensee items.')
-    
-    # Compile the statistics.
-    print('Compiling licensee sales statistics...')
-    stats = stats_to_df(daily_licensee_sales)
-
-    # Save the compiled statistics.
-    stats.to_excel(f'{sales_dir}/sales-by-licensee.xlsx', index=False)
-
-    # Save the statistics by month.
-    save_stats_by_month(stats, sales_dir, 'sales-by-licensee')
-
-    # TODO: Calculate and save aggregate statistics.
+        midpoint_end = datetime.now()
+        print('Curated sales file in:', midpoint_end - midpoint_start)
 
     end = datetime.now()
     print('✓ Finished curating sales in', end - start)
@@ -252,6 +265,23 @@ if __name__ == '__main__':
 
     # Specify where your data lives.
     base = 'D:\\data\\washington\\'
-    DATA_DIR = f'{base}\\CCRS PRR (12-7-22)\\CCRS PRR (12-7-22)\\'
+    DATA_DIR = f'{base}\\CCRS PRR (1-27-23)\\CCRS PRR (1-27-23)\\'
     STATS_DIR = f'{base}\\ccrs-stats\\'
     curate_ccrs_sales(DATA_DIR, STATS_DIR)
+
+
+#------------------------------------------------------------------------------
+# DEV: Should statistics be moved to `ccrs_sales_stats`?
+#------------------------------------------------------------------------------
+
+# # Compile the statistics.
+# print('Compiling licensee sales statistics...')
+# stats = stats_to_df(daily_licensee_sales)
+
+# # Save the compiled statistics.
+# stats.to_excel(f'{sales_dir}/sales-by-licensee.xlsx', index=False)
+
+# # Save the statistics by month.
+# save_stats_by_month(stats, sales_dir, 'sales-by-licensee')
+
+# Future work: Calculate and save aggregate statistics.
